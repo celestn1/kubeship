@@ -1,131 +1,199 @@
 
-# KubeShip
+# Project: KubeShip – GitOps Platform with ArgoCD and EKS
 
-KubeShip is a production-ready, GitOps-based Kubernetes platform built with **Amazon EKS**, **ArgoCD**, **Terraform**, and **Helm**. It deploys a full-stack microservices application including frontend, API gateway, PostgreSQL, and Redis.
+## What Is KubeShip?
 
----
+**KubeShip** is a real-world GitOps platform that automates the deployment and management of containerized applications using:
 
-## Features
+- **Amazon EKS** for Kubernetes orchestration
+- **ArgoCD** for GitOps-based continuous delivery
+- **Terraform** for infrastructure as code
+- **Helm** for Kubernetes packaging
+- **GitHub Actions** for CI pipelines
+- **React + FastAPI** for microservices
+- **PostgreSQL + Redis** for backend storage
 
-- ✅ Infrastructure as Code (Terraform)
-- ✅ GitOps Continuous Delivery (ArgoCD)
-- ✅ Kubernetes-native Helm deployments
-- ✅ CI/CD with GitHub Actions
-- ✅ PostgreSQL + Redis backend services
-- ✅ React + FastAPI full-stack application
-- ✅ Secure, autoscaling EKS cluster
-- ✅ Prometheus & Grafana monitoring
-
----
-
-## Architecture
-
-![KubeShip Architecture](./kubeship_architecture_diagram.png)
+This project shows how modern teams deploy applications at scale with automation and best DevOps practices.
 
 ---
 
-## Tech Stack
+## Why KubeShip?
 
-| Layer         | Tool                        |
-|---------------|-----------------------------|
-| IaC           | Terraform                   |
-| GitOps        | ArgoCD                      |
-| Kubernetes    | Amazon EKS                  |
-| CI/CD         | GitHub Actions              |
-| Packaging     | Helm                        |
-| Container Registry | Amazon ECR             |
-| Backend       | FastAPI, PostgreSQL, Redis  |
-| Frontend      | React + Vite / Next.js      |
-| Monitoring    | Prometheus + Grafana        |
+Because deploying microservices manually doesn’t scale. You need:
+
+- Declarative infrastructure (Terraform)
+- Automated provisioning (EKS)
+- GitOps deployment model (ArgoCD)
+- CI/CD pipelines (GitHub Actions)
+- Monitoring and scalability
+
+KubeShip combines all of these in one integrated stack.
 
 ---
 
-## 📁 Project Structure
+## Architecture Overview
+
+### Core Components
+
+| Layer             | Tool                         |
+|-------------------|------------------------------|
+| Infra Provision   | Terraform                    |
+| Cluster           | Amazon EKS                   |
+| GitOps CD         | ArgoCD                       |
+| Helm Packaging    | Helm                         |
+| CI/CD             | GitHub Actions               |
+| Container Registry| Amazon ECR                   |
+| Microservices     | FastAPI, React, PostgreSQL   |
+| Monitoring        | Prometheus + Grafana         |
+
+---
+
+## Architecture Diagram
+
+```
+                        ┌──────────────────────────────┐
+                        │     GitHub Repo (IaC + App)  │
+                        └────────────┬─────────────────┘
+                                     │ Push
+                          ┌──────────▼──────────┐
+                          │    GitHub Actions   │────────────┐
+                          └──────────┬──────────┘            │
+                                     │ Image Build/Push      │
+                          ┌──────────▼──────────┐            │
+                          │    Amazon ECR       │            │
+                          └─────────────────────┘            │
+                                                             ▼
+                                               ┌────────────────────────┐
+                                               │   Amazon EKS Cluster   │
+                                               │   (Provisioned via TF) │
+                                               └──────────┬─────────────┘
+                                                          │
+                                                ┌─────────▼─────────┐
+                                                │     ArgoCD        │
+                                                │  (GitOps CD Tool) │
+                                                └──────┬────────────┘
+                                                       │
+                                           ┌───────────▼────────────┐
+                                           │   Helm Deployments      │
+                                           │  (Frontend, API, Redis) │
+                                           └─────────────────────────┘
+```
+
+---
+
+## Project Structure
 
 ```
 kubeship/
-├── terraform/              # Infrastructure provisioning
-├── helm-charts/            # Helm charts for each service
-├── microservices/
-│   ├── api-gateway/        # FastAPI Gateway
-│   ├── auth-service/       # JWT Auth Service
-│   └── frontend/           # React or Next.js App
-├── manifests/              # ArgoCD projects and apps
-└── .github/workflows/      # CI pipelines
+├── terraform/              # VPC + EKS via Terraform
+├── microservices/          # React + FastAPI + DB
+│   ├── api-gateway/
+│   ├── auth-service/
+│   └── frontend/
+├── helm-charts/            # Helm charts per service
+├── manifests/              # ArgoCD apps and projects
+└── .github/workflows/      # CI build and push pipelines
 ```
 
 ---
 
-## Quick Start
+## Infrastructure Provisioning with Terraform
 
-### 1. Provision Infrastructure
+Provision:
+
+- VPC with public and private subnets
+- NAT Gateway for outbound traffic
+- Amazon EKS cluster
+- IAM roles and node groups
+
+Modules used:
+- `terraform-aws-modules/vpc/aws`
+- `terraform-aws-modules/eks/aws`
+
+Command:
 
 ```bash
-cd terraform
 terraform init
 terraform apply
 ```
 
-### 2. Access ArgoCD
+---
+
+## GitOps with ArgoCD
+
+ArgoCD tracks:
+- Git repo for Helm chart changes
+- Helm charts from `helm-charts/`
+- Syncs them to EKS cluster
+
+To access ArgoCD:
 
 ```bash
 kubectl port-forward svc/argocd-server -n argocd 8080:443
-kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
 ```
 
-Visit https://localhost:8080 and login with `admin`.
-
-### 3. Build & Push Docker Images
-
-```bash
-docker build -t <your-ecr-repo>/api-gateway:latest ./microservices/api-gateway
-docker push <your-ecr-repo>/api-gateway:latest
-```
-
-### 4. Deploy via Helm + ArgoCD
-
-Update `helm-charts/<service>/values.yaml` with your image and config.
-
-ArgoCD will automatically sync and deploy to EKS.
+Open: [https://localhost:8080](https://localhost:8080)
 
 ---
 
-## Observability
+## CI/CD with GitHub Actions
 
-Install Prometheus stack:
+- Builds Docker images
+- Pushes to ECR
+- ArgoCD picks up and syncs latest deployment
+
+CI defined in: `.github/workflows/deploy.yaml`
+
+---
+
+## Testing and Observability
+
+Post-deployment:
+
+- Validate apps in ArgoCD UI
+- `kubectl get pods -A` for health checks
+- Test endpoints using ALB DNS
+
+Monitoring with Prometheus + Grafana (optional):
 
 ```bash
-helm install kube-prometheus prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
-```
-
-Access Grafana:
-
-```bash
-kubectl port-forward svc/kube-prometheus-grafana -n monitoring 3000:80
+helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
 ```
 
 ---
 
-## Resources
+## ✅ Real-World Problem Solving
 
-- [ArgoCD](https://argo-cd.readthedocs.io/)
-- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws)
-- [Helm](https://helm.sh/)
-- [AWS EKS Docs](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html)
+| Concern                    | KubeShip Solution               |
+|----------------------------|----------------------------------|
+| Scalable Deployments       | GitOps + ArgoCD                 |
+| CI/CD                      | GitHub Actions + ECR            |
+| Infra as Code              | Terraform                       |
+| Secrets + Networking       | EKS best practices              |
+| Observability              | Prometheus + Grafana            |
 
 ---
 
-## TODO
+## What’s Next?
 
-- [ ] Add domain support via cert-manager + Route 53
-- [ ] Implement secrets management with Sealed Secrets
-- [ ] Enable horizontal pod autoscaling
-- [ ] Add staging/prod environments
+- [ ] Add custom domain with cert-manager + Route 53
+- [ ] Use Sealed Secrets or External Secrets
+- [ ] Setup staging and prod ArgoCD environments
+- [ ] Enable autoscaling (HPA)
+
+---
+
+## Summary
+
+KubeShip lets you:
+
+✅ Learn GitOps & EKS  
+✅ Use Terraform professionally  
+✅ Automate deployments  
+✅ Build full-stack apps in Kubernetes
 
 ---
 
 ## Author
 
-Made with ❤️ by Celestine — [GitHub](https://github.com/celestn1)
-
-Contributions welcome!
+Built with ❤️ by Celestine — [GitHub](https://github.com/celestn1)

@@ -1,0 +1,31 @@
+# Terraform state
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfplan
+
+# Terraform crash logs
+crash.log
+
+# Local .terraform dir
+.terraform/
+
+# Ignore Terraform workspace files
+.terraform.lock.hcl
+
+
+# VSCode settings
+.vscode/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# GitHub Actions runner files
+.github/workflows/*.log
+
+# Ignore sensitive output
+secrets.auto.tfvars
