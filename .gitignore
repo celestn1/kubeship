@@ -29,3 +29,44 @@ Thumbs.db
 
 # Ignore sensitive output
 secrets.auto.tfvars
+
+# Node modules directory
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables (do not commit these!)
+.env
+.env.local
+.env.*.local
+
+# Sensitive configuration and secrets
+.test/
+
+# Runtime data (e.g., process IDs, temporary files)
+pids/
+*.pid
+*.seed
+
+# Coverage directory used by testing tools
+coverage/
+
+# Build output directories
+dist/
+build/
+
+# IDE and editor directories/files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Optional: Certificates or private keys
+*.pem
