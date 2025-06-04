@@ -25,6 +25,7 @@ __pycache__/
 .venv/
 env/
 venv/
+*.venv/
 
 # === Environment Files ===
 .env
