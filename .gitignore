@@ -1,3 +1,5 @@
+# kubeship/.gitignore
+
 # Terraform state
 *.tfstate
 *.tfstate.backup
