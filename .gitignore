@@ -1,68 +1,47 @@
 # kubeship/.gitignore
 
-# Terraform state
+# === Terraform ===
 *.tfstate
 *.tfstate.backup
 *.tfvars
 *.tfplan
-
-# Terraform crash logs
 crash.log
-
-# Local .terraform dir
 .terraform/
-
-# Ignore Terraform workspace files
 .terraform.lock.hcl
 
-
-# VSCode settings
-.vscode/
-
-# OS-specific files
-.DS_Store
-Thumbs.db
-
-# Log files
-*.log
-
-# GitHub Actions runner files
-.github/workflows/*.log
-
-# Ignore sensitive output
-secrets.auto.tfvars
-
-# Node modules directory
+# === Node.js ===
 node_modules/
-
-# Logs
-logs/
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+logs/
+*.log
 
-# Environment variables (do not commit these!)
+# === Python ===
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.venv/
+env/
+venv/
+
+# === Environment Files ===
 .env
+.env.*
 .env.local
 .env.*.local
+secrets.auto.tfvars
 
-# Sensitive configuration and secrets
-.test/
-
-# Runtime data (e.g., process IDs, temporary files)
+# === Build Outputs ===
+dist/
+build/
+coverage/
 pids/
 *.pid
 *.seed
 
-# Coverage directory used by testing tools
-coverage/
-
-# Build output directories
-dist/
-build/
-
-# IDE and editor directories/files
+# === VSCode & IDEs ===
 .vscode/
 .idea/
 *.suo
@@ -70,5 +49,15 @@ build/
 *.njsproj
 *.sln
 
-# Optional: Certificates or private keys
+# === OS-specific Files ===
+.DS_Store
+Thumbs.db
+
+# === GitHub Actions ===
+.github/workflows/*.log
+
+# === Optional: Certificates / Private Keys ===
 *.pem
+
+# === Testing Artifacts ===
+.test/
