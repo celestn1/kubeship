@@ -25,7 +25,10 @@ __pycache__/
 .venv/
 env/
 venv/
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 
 # === Environment Files ===
 .env
