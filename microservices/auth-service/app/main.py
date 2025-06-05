@@ -1,12 +1,16 @@
 # kubeship/microservices/auth-service/app/main.py
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
 from app.db import database, engine, Base
-from app.models.user import User
 from app.routers import auth
+from app.routers import profile
+from app.utils import error_handler
 
 app = FastAPI(title="KubeShip Auth Service with PostgreSQL")
+
+app.include_router(profile.router, prefix="/auth")
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,6 +19,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_exception_handler(HTTPException, error_handler.http_exception_handler)
+app.add_exception_handler(RequestValidationError, error_handler.validation_exception_handler)
 
 @app.on_event("startup")
 async def startup():
