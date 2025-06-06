@@ -1,53 +1,85 @@
 // kubeship/microservices/frontend/src/hooks/useAuth.ts
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { verifyToken } from "../utils/apiClient";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+interface UserPayload {
+  email: string;
+  firstname: string;
+  exp?: number; // JWT expiration time (in seconds)
+}
 
-export function useAuth() {
-  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+export const useAuth = () => {
   const [user, setUser] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const verifyToken = async () => {
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
+  const loginWithToken = (token: string) => {
+    localStorage.setItem("token", token);
+    const payload = parseJwt(token);
+
+    if (payload && isTokenFresh(payload)) {
+      setUser(payload.firstname);
+    } else {
+      logout();
     }
-
-    try {
-      const res = await fetch(`${API_URL}/verify?token=${token}`);
-      const data = await res.json();
-
-      if (data.valid) {
-        setUser(data.firstname);
-      } else {
-        setToken(null);
-        localStorage.removeItem("token");
-      }
-    } catch {
-      setToken(null);
-      localStorage.removeItem("token");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    verifyToken();
-  }, [token]);
-
-  const loginWithToken = (newToken: string) => {
-    localStorage.setItem("token", newToken);
-    setToken(newToken);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
-    setToken(null);
     setUser(null);
+    navigate("/login");
   };
 
-  return { token, user, loading, loginWithToken, logout };
-}
+  const isTokenFresh = (payload: UserPayload | null): boolean => {
+    if (!payload?.exp) return false;
+    const now = Math.floor(Date.now() / 1000); // seconds since epoch
+    return payload.exp > now;
+  };
+
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const payload = parseJwt(token);
+      const fresh = isTokenFresh(payload);
+
+      try {
+        const result = await verifyToken(token);
+        if (result.valid && result.firstname && fresh) {
+          setUser(result.firstname);
+        } else {
+          logout();
+        }
+      } catch {
+        logout();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkToken();
+  }, []);
+
+  return { user, loginWithToken, logout, loading };
+};
+
+const parseJwt = (token: string): UserPayload | null => {
+  try {
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const json = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+};

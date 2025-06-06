@@ -1,39 +1,32 @@
 // kubeship/microservices/frontend/src/pages/Profile.tsx
 
-import React, { useState } from "react";
+import React from "react";
 import { useOutletContext } from "react-router-dom";
-import AvatarUpload from "../components/AvatarUpload";
-import ProfileView from "../components/ProfileView";
-import ProfileEditForm from "../components/ProfileEditForm";
+import Card from "../components/UI/Card";
+import Button from "../components/UI/Button";
 
-const Profile = () => {
-  const { verifiedUser } = useOutletContext<{ verifiedUser: string | null }>();
-  const [isEditing, setIsEditing] = useState(false);
+type LayoutContextType = {
+  verifiedUser: string | null;
+  handleLogout: () => void;
+};
 
-  const handleSave = async (bio: string, avatar: File | null) => {
-    // Send PATCH/PUT to your API here
-    console.log("Saving...", bio, avatar);
-    setIsEditing(false);
-  };
+const Profile: React.FC = () => {
+  const { verifiedUser, handleLogout } = useOutletContext<LayoutContextType>();
 
-  if (!verifiedUser) {
-    return <p className="text-center text-red-600">User not logged in</p>;
-  }
-
-  return isEditing ? (
-    <ProfileEditForm
-      initialBio="" 
-      onSave={handleSave}
-      onCancel={() => setIsEditing(false)}
-    />
-  ) : (
-    <ProfileView
-      user={verifiedUser}
-      email=""
-      bio=""
-      joined=""
-      onEdit={() => setIsEditing(true)}
-    />
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+      <Card>
+        <div className="space-y-4 text-center">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Profile Information
+          </h2>
+          <p className="text-sm text-gray-600">
+            Logged in as: <span className="font-medium">{verifiedUser}</span>
+          </p>
+          <Button label="Logout" onClick={handleLogout} color="red" />
+        </div>
+      </Card>
+    </div>
   );
 };
 

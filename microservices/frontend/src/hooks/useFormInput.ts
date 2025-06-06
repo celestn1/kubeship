@@ -2,27 +2,25 @@
 
 import { useState } from "react";
 
-export const useFormInput = <T extends Record<string, string>>(initial: T) => {
-  const [values, setValues] = useState<T>(initial);
+type InputEvent = React.ChangeEvent<HTMLInputElement>;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+export const useFormInput = <T extends Record<string, string>>(initialValues: T) => {
+  const [values, setValues] = useState<T>(initialValues);
+
+  const handleChange = (e: InputEvent) => {
     const { name, value } = e.target;
-    const trimmedStart = value.trimStart();
-    setValues((prev) => ({ ...prev, [name]: trimmedStart }));
+    setValues((prev) => ({ ...prev, [name]: value }));
   };
 
   const getTrimmed = (): T => {
-    const result = {} as T;
+    const trimmed: Partial<T> = {};
     for (const key in values) {
-      result[key] = values[key].trim() as T[Extract<keyof T, string>];
+      trimmed[key] = values[key].trim() as T[Extract<keyof T, string>];
     }
-    return result;
+    return trimmed as T;
   };
 
-  return {
-    values,
-    handleChange,
-    getTrimmed,
-    setValues,
-  };
+  const reset = () => setValues(initialValues);
+
+  return { values, handleChange, getTrimmed, reset };
 };

@@ -3,9 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { login } from "../apiClient";
+import { login } from "../utils/apiClient";
 import { useAuth } from "../hooks/useAuth";
 import { useFormInput } from "../hooks/useFormInput";
+import InputField from "../components/Form/InputField";
+import PasswordField from "../components/Form/PasswordField";
+import Card from "../components/UI/Card";
+import Button from "../components/UI/Button";
+import { isValidUsername, isValidEmail } from "../../../../shared/validators";
 
 const Login: React.FC = () => {
   const { values, handleChange, getTrimmed } = useFormInput({
@@ -13,17 +18,14 @@ const Login: React.FC = () => {
     password: "",
   });
 
-  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
   const location = useLocation();
   const { loginWithToken } = useAuth();
 
   useEffect(() => {
     const flash = location.state?.flash;
-
     if (flash) {
       toast.dismiss();
       toast.success(flash);
@@ -36,8 +38,16 @@ const Login: React.FC = () => {
     setMessage("");
     setLoading(true);
 
+    const { username, password } = getTrimmed();
+
+    const isValidInput = isValidUsername(username) || isValidEmail(username);
+    if (!isValidInput) {
+      setMessage("Enter a valid email or username.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { username, password } = getTrimmed();
       const result = await login(username, password);
       setLoading(false);
 
@@ -65,74 +75,51 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded shadow-md w-full max-w-md"
-      >
-        <h2 className="text-2xl font-bold text-center text-blue-700 mb-6">
-          🚢 KubeShip Frontend
-        </h2>
+      <Card>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <h2 className="text-2xl font-bold text-center text-blue-700">
+            🚢 KubeShip Frontend
+          </h2>
 
-        <input
-          type="text"
-          id="username"
-          name="username"
-          placeholder="Email or username"
-          autoComplete="username"
-          value={values.username}
-          onChange={handleChange}
-          required
-          className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+          <InputField
+            label="Email or Username"
+            name="username"
+            type="text"
+            value={values.username}
+            onChange={handleChange}
+            autoComplete="username"
+            required
+          />
 
-        <div className="relative mb-4">
-          <input
-            type={showPassword ? "text" : "password"}
-            id="password"
+          <PasswordField
+            label="Password"
             name="password"
-            placeholder="Password"
-            autoComplete="current-password"
             value={values.password}
             onChange={handleChange}
+            autoComplete="current-password"
             required
-            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-2 flex items-center text-sm text-blue-600 hover:underline"
-          >
-            {showPassword ? "Hide" : "Show"}
-          </button>
-        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold disabled:opacity-50"
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
+          <Button type="submit" label={loading ? "Logging in..." : "Login"} disabled={loading} full />
 
-        <div className="mt-4 text-center text-sm space-y-2">
-          <p>
-            Don’t have an account?{" "}
-            <a href="/register" className="text-blue-700 underline">
-              Sign up
-            </a>
-          </p>
-          <p>
-            Forgot your password?{" "}
-            <a href="/forgot-password" className="text-blue-600 underline">
-              Reset it
-            </a>
-          </p>
-        </div>
+          {message && <p className="text-center text-sm text-red-600">{message}</p>}
 
-        {message && (
-          <p className="mt-4 text-center text-sm text-red-600">{message}</p>
-        )}
-      </form>
+          <div className="mt-4 text-center text-sm space-y-2">
+            <p>
+              Don’t have an account?{" "}
+              <a href="/register" className="text-blue-700 underline">
+                Sign up
+              </a>
+            </p>
+            <p>
+              Forgot your password?{" "}
+              <a href="/forgot-password" className="text-blue-600 underline">
+                Reset it
+              </a>
+            </p>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 };

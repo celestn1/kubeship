@@ -1,58 +1,104 @@
 // kubeship/microservices/frontend/src/pages/ForgotPassword.tsx
 
 import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import InputField from "../components/Form/InputField";
+import Button from "../components/UI/Button";
+import Card from "../components/UI/Card";
+import { isValidEmail } from "../../../../shared/validators";
+import toast from "react-hot-toast";
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setMessage("");
+
+    const trimmedEmail = email.trim();
+
+    if (!isValidEmail(trimmedEmail)) {
+      setMessage("Please enter a valid email address.");
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/request-password-reset`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/request-password-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: trimmedEmail }),
       });
 
-      setSubmitted(true);
+      if (res.ok) {
+        toast.success("If your email is registered, reset instructions have been sent.");
+        navigate("/login");
+      } else {
+        const data = await res.json();
+        setMessage(data.detail || "Could not process your request.");
+      }
     } catch {
-      setError("Something went wrong. Please try again.");
+      setMessage("Network error. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center text-blue-700 mb-6">Reset your password</h2>
+      <Card>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* ✅ KubeShip Header */}
+          <h2 className="text-2xl font-bold text-center text-blue-700 mb-2">
+            <Link to="/" className="hover:underline">🚢 KubeShip Frontend</Link>
+          </h2>
 
-        {submitted ? (
-          <p className="text-center text-green-600">
-            If your email is in our system, you’ll receive reset instructions shortly.
+          <p className="text-center text-gray-600 text-sm mb-4">
+            Forgot Password? Enter your email to receive a reset link
           </p>
-        ) : (
-          <>
-            <input
-              type="email"
-              placeholder="Your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold"
-            >
-              Send Reset Link
-            </button>
-            {error && <p className="text-center text-red-600 mt-4">{error}</p>}
-          </>
-        )}
-      </form>
+
+          <InputField
+            label=""
+            name="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
+            showStatusIcon
+            status={
+              email.length === 0
+                ? undefined
+                : isValidEmail(email)
+                ? "valid"
+                : "invalid"
+            }
+          />
+
+          <Button
+            type="submit"
+            label={submitting ? "Submitting..." : "Send Reset Link"}
+            disabled={submitting || !isValidEmail(email)}
+            full
+          />
+
+          {message && (
+            <p className="text-center text-sm text-red-600">{message}</p>
+          )}
+
+          {/* ✅ CTA Footer */}
+          <p className="text-center text-sm mt-4">
+            Remember your password?{" "}
+            <Link to="/login" className="text-blue-600 underline">
+              Sign in
+            </Link>
+          </p>
+        </form>
+      </Card>
     </div>
   );
 };

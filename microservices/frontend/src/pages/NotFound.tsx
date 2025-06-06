@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
+import Card from "../components/UI/Card";
 
 const NotFound: React.FC = () => {
   const handleReportBug = () => {
@@ -13,22 +14,26 @@ const NotFound: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-6">
-      <h1 className="text-4xl font-bold text-red-600 mb-4">404 - Page Not Found</h1>
-      <p className="text-gray-700 text-center max-w-md mb-6">
-        The page you are looking for doesn't exist or has been moved. Please check the URL or return to the home page.
-      </p>
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <Link to="/" className="text-blue-600 hover:underline font-medium">
-          ← Back to Home
-        </Link>
-        <button
-          onClick={handleReportBug}
-          className="text-sm text-red-500 underline hover:text-red-700"
-        >
-          Report this bug
-        </button>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+      <Card>
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold text-red-600">404 - Page Not Found</h1>
+          <p className="text-gray-700 max-w-md mx-auto">
+            The page you are looking for doesn't exist or has been moved. Please check the URL or return to the home page.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/" className="text-blue-600 hover:underline font-medium">
+              ← Back to Home
+            </Link>
+            <button
+              onClick={handleReportBug}
+              className="text-sm text-red-500 underline hover:text-red-700"
+            >
+              Report this bug
+            </button>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };

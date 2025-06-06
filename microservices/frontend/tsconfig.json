@@ -1,3 +1,11 @@
+// kubeship/microservices/frontend/tsconfig.json
+// This file is used to configure TypeScript for the frontend microservice.
+// It includes settings for module resolution, JSX support, and type checking.
+// It also sets up path aliases for shared code.
+// The `baseUrl` and `paths` options are used to resolve module paths.
+// The `types` option includes types for Vite, which is used as the build tool.
+
+
 {
   "compilerOptions": {
     "target": "ESNext",
@@ -12,7 +20,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "baseUrl": ".",
   },
   "include": ["src", "vite-env.d.ts"]
 }
