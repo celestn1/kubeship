@@ -116,16 +116,26 @@ const Register: React.FC = () => {
         {["firstname", "lastname", "email", "username", "password"].map((field) => {
           const isEmail = field === "email";
           const isUsername = field === "username";
+          const isPassword = field === "password";
           const value = (form as any)[field];
+
+          const autocompleteMap: Record<string, string> = {
+            firstname: "given-name",
+            lastname: "family-name",
+            email: "email",
+            username: "username",
+            password: "new-password"
+          };
 
           return (
             <div key={field} className="mb-4">
               <label htmlFor={field} className="block text-sm font-medium mb-1 capitalize">{field}</label>
               <div className="relative">
                 <input
-                  type={field === "password" ? "password" : isEmail ? "email" : "text"}
+                  type={isPassword ? "password" : isEmail ? "email" : "text"}
                   name={field}
                   id={field}
+                  autoComplete={autocompleteMap[field]}
                   value={value}
                   onChange={handleFieldChange}
                   required
@@ -160,7 +170,7 @@ const Register: React.FC = () => {
                   Choose a unique username (no spaces or special characters)
                 </p>
               )}
-              {field === "password" && (
+              {isPassword && (
                 <p className="text-xs text-gray-500 mt-1">
                   Password should be at least 8 characters long
                 </p>

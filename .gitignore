@@ -62,4 +62,4 @@ Thumbs.db
 # === Testing Artifacts ===
 .test/
 *export_code.sh
-*kubeship_code_dump
+*kubeship_code_dump*

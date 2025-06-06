@@ -26,11 +26,10 @@ const Login: React.FC = () => {
 
     if (flash) {
       toast.dismiss();
-      toast.success(flash); 
+      toast.success(flash);
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.key]); // more reliable than full location
-
+  }, [location.key]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,8 +75,10 @@ const Login: React.FC = () => {
 
         <input
           type="text"
+          id="username"
           name="username"
           placeholder="Email or username"
+          autoComplete="username"
           value={values.username}
           onChange={handleChange}
           required
@@ -87,8 +88,10 @@ const Login: React.FC = () => {
         <div className="relative mb-4">
           <input
             type={showPassword ? "text" : "password"}
+            id="password"
             name="password"
             placeholder="Password"
+            autoComplete="current-password"
             value={values.password}
             onChange={handleChange}
             required
@@ -111,12 +114,20 @@ const Login: React.FC = () => {
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        <p className="mt-4 text-center text-sm">
-          Don’t have an account?{" "}
-          <a href="/register" className="text-blue-700 underline">
-            Sign up
-          </a>
-        </p>
+        <div className="mt-4 text-center text-sm space-y-2">
+          <p>
+            Don’t have an account?{" "}
+            <a href="/register" className="text-blue-700 underline">
+              Sign up
+            </a>
+          </p>
+          <p>
+            Forgot your password?{" "}
+            <a href="/forgot-password" className="text-blue-600 underline">
+              Reset it
+            </a>
+          </p>
+        </div>
 
         {message && (
           <p className="mt-4 text-center text-sm text-red-600">{message}</p>

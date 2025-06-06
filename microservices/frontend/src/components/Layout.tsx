@@ -5,8 +5,14 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 
-const Layout = () => {
-  const { user: verifiedUser, loginWithToken, logout, loading } = useAuth();
+// ✅ Exported for use in Dashboard or other nested routes
+export type LayoutContextType = {
+  verifiedUser: any;
+  handleLogout: () => void;
+};
+
+const Layout: React.FC = () => {
+  const { user: verifiedUser, logout, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -33,7 +39,6 @@ const Layout = () => {
           <button onClick={logout} className="text-red-600 hover:underline">Logout</button>
         </nav>
       </header>
-
 
       <Outlet context={{ verifiedUser, handleLogout: logout }} />
     </div>

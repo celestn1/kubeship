@@ -7,16 +7,29 @@ from sqlalchemy import or_
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from typing import Optional
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 import jwt
+import os
 
 from app.db import SessionLocal
 from app.models.user import User as UserModel
 
 router = APIRouter()
 
-SECRET_KEY = "kubeship_secret"
+# Security
+SECRET_KEY = os.getenv("SECRET_KEY", "kubeship_secret")
+RESET_SECRET = os.getenv("RESET_SECRET", "reset_secret_key")
 ALGORITHM = "HS256"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+serializer = URLSafeTimedSerializer(RESET_SECRET)
+
+# === Models ===
+class EmailRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str
 
 class LoginRequest(BaseModel):
     username: str
@@ -125,3 +138,38 @@ def verify_token(token: str):
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+# === /request-password-reset ===
+@router.post("/request-password-reset")
+def request_password_reset(req: EmailRequest, db: Session = Depends(get_db)):
+    user = db.query(UserModel).filter(UserModel.email == req.email).first()
+    if not user:
+        # Return 200 even if email not found — prevents account enumeration
+        return {"message": "If that email exists, a reset link has been sent."}
+
+    token = serializer.dumps(user.email)
+
+    # Simulated Email Sending — Replace with real mail service (SendGrid, SES, etc.)
+    reset_link = f"http://localhost:3001/reset-password/{token}"
+    print(f"[DEBUG] Password reset link for {user.email}: {reset_link}")
+
+    return {"message": "If that email exists, a reset link has been sent."}
+
+# === /reset-password ===
+@router.post("/reset-password")
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    try:
+        email = serializer.loads(req.token, max_age=3600)  # 1 hour expiry
+    except SignatureExpired:
+        raise HTTPException(status_code=400, detail="Reset token expired")
+    except BadSignature:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+
+    user = db.query(UserModel).filter(UserModel.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.hashed_password = pwd_context.hash(req.password)
+    db.commit()
+
+    return {"message": "Password updated successfully"}
