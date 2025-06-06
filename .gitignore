@@ -25,10 +25,6 @@ __pycache__/
 .venv/
 env/
 venv/
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 
 # === Environment Files ===
 .env
@@ -65,3 +61,5 @@ Thumbs.db
 
 # === Testing Artifacts ===
 .test/
+*export_code.sh
+*kubeship_code_dump

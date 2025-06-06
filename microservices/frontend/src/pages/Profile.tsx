@@ -22,7 +22,7 @@ const Profile = () => {
 
   return isEditing ? (
     <ProfileEditForm
-      initialBio="Frontend engineer at KubeShip" 
+      initialBio="" 
       onSave={handleSave}
       onCancel={() => setIsEditing(false)}
     />

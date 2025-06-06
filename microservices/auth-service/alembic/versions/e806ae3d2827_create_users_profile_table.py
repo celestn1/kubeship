@@ -1,3 +1,5 @@
+# kubeship/microservices/auth-service/alembic/versions/e806ae3d2827_create_users_profile_table.py
+
 """create users_profile table
 
 Revision ID: e806ae3d2827

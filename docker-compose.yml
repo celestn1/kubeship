@@ -1,0 +1,33 @@
+# kubeship/docker-compose.yml
+
+services:
+  nginx-gateway:
+    build:
+      context: ./nginx
+    ports:
+      - "3000:80"
+    depends_on:
+      - auth-service
+
+  auth-service:
+    build: ./microservices/auth-service
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      - kubeship-pg-db
+
+  kubeship-pg-db:
+    image: postgres:latest
+    container_name: kubeship-pg-db
+    restart: always
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:

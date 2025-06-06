@@ -2,9 +2,11 @@
 
 import { getErrorMessage, extractStatusCode } from "./errorHandler";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+
 export async function register(username: string, password: string) {
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -17,9 +19,8 @@ export async function register(username: string, password: string) {
       success: res.ok,
     };
   } catch (err) {
-    const statusCode = extractStatusCode(err);
     return {
-      message: getErrorMessage(statusCode ?? 0) || "Network error during registration",
+      message: "Network error during registration",
       success: false,
     };
   }
@@ -27,7 +28,7 @@ export async function register(username: string, password: string) {
 
 export const login = async (username: string, password: string) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -37,12 +38,12 @@ export const login = async (username: string, password: string) => {
 
     return response.ok
       ? { token: data.access_token, message: "Login successful" }
-      : { token: null, message: data.detail || "Login failed" };
-  } catch (err) {
-    const statusCode = extractStatusCode(err);
+      : { token: null, message: data?.detail || "Login failed" };
+  } catch {
     return {
       token: null,
-      message: getErrorMessage(statusCode ?? 0) || "Network error during login",
+      message: "Network error. Please check your connection.",
     };
   }
 };
+

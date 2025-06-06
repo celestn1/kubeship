@@ -10,7 +10,7 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
   const { verifiedUser } = useOutletContext<ContextType>();
 
   if (!verifiedUser) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;

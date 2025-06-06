@@ -8,3 +8,5 @@ databases
 asyncpg
 passlib[bcrypt]
 psycopg2-binary
+pydantic[email]
+bcrypt==4.1.2
