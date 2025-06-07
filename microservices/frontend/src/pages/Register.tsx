@@ -37,7 +37,6 @@ const Register: React.FC = () => {
     }
 
     setChecking((prev) => ({ ...prev, [name]: true }));
-
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
 
     typingTimeout.current = window.setTimeout(async () => {
@@ -112,13 +111,14 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <Card>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <h2 className="text-2xl font-bold text-center text-blue-700 mb-4">
-            <a href="/" className="hover:underline">🚢 KubeShip Frontend</a>
-          </h2>
+    <div className="min-h-screen bg-[#0a2a6c] bg-[url('/pattern.svg')] bg-cover bg-no-repeat flex flex-col items-center justify-center p-4">
+      <Card className="w-full max-w-sm p-8">
+        <div className="flex flex-col items-center justify-center text-center mb-4">
+          <img src="/assets/kubeship-icon.svg" alt="KubeShip" className="w-10 h-10 mx-auto" />
+          <h2 className="text-lg font-semibold mt-2 w-full">Create an Account</h2>
+        </div>
 
+        <form onSubmit={handleSubmit} className="space-y-4">
           <InputField
             label="First Name"
             name="firstname"
@@ -201,18 +201,19 @@ const Register: React.FC = () => {
             full
           />
 
-          <p className="text-center text-sm">
-            Already have an account?{" "}
-            <a href="/login" className="text-blue-700 underline">
-              Sign in
-            </a>
-          </p>
-
           {message && (
             <p className="text-center text-sm text-red-600">{message}</p>
           )}
         </form>
       </Card>
+
+      {/* Pill-style footer */}
+      <div className="mt-6 bg-white/10 px-6 py-3 rounded-full text-white text-sm text-center">
+        Already have an account?{" "}
+        <a href="/login" className="font-bold underline">
+          Sign In
+        </a>
+      </div>
     </div>
   );
 };

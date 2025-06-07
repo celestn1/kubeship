@@ -1,60 +1,59 @@
 // kubeship/microservices/frontend/src/components/Form/PasswordField.tsx
 
 import React, { useState } from "react";
+import { Lock, Eye, EyeOff } from "lucide-react";
 
 interface PasswordFieldProps {
-  label: string;
   name: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  error?: string;
-  helperText?: string;
   autoComplete?: string;
-  required?: boolean; // ✅ Added to support <PasswordField required />
+  required?: boolean;
+  placeholder?: string;
+  label?: string;
+  helperText?: string;
 }
 
 const PasswordField: React.FC<PasswordFieldProps> = ({
-  label,
   name,
   value,
   onChange,
-  error,
-  helperText,
-  autoComplete = "new-password",
-  required = false, // ✅ Defaults to false
+  autoComplete,
+  required = false,
+  placeholder = "Password",
+  label,
 }) => {
-  const [showPassword, setShowPassword] = useState(false);
+  const [show, setShow] = useState(false);
 
   return (
     <div className="mb-4">
-      <label htmlFor={name} className="block text-sm font-medium mb-1 capitalize">
-        {label}
-      </label>
+      {label && <label htmlFor={name} className="block mb-1 text-sm font-medium">{label}</label>}
 
       <div className="relative">
+        <span className="absolute inset-y-0 left-3 flex items-center text-gray-400">
+          <Lock size={16} />
+        </span>
+
         <input
-          type={showPassword ? "text" : "password"}
           id={name}
           name={name}
+          type={show ? "text" : "password"}
           value={value}
           onChange={onChange}
           autoComplete={autoComplete}
           required={required}
-          className={`w-full p-2 pr-16 border rounded focus:outline-none focus:ring-2 ${
-            error ? "border-red-500 focus:ring-red-400" : "focus:ring-blue-500"
-          }`}
+          placeholder={placeholder}
+          className="w-full pl-10 pr-10 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+
         <button
           type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute inset-y-0 right-2 flex items-center text-sm text-blue-600 hover:underline"
+          onClick={() => setShow((prev) => !prev)}
+          className="absolute inset-y-0 right-3 flex items-center text-gray-400"
         >
-          {showPassword ? "Hide" : "Show"}
+          {show ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
       </div>
-
-      {helperText && <p className="text-xs text-gray-500 mt-1">{helperText}</p>}
-      {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
     </div>
   );
 };

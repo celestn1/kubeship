@@ -14,7 +14,8 @@ interface InputFieldProps {
   showStatusIcon?: boolean;
   status?: "checking" | "valid" | "invalid";
   required?: boolean;
-  icon?: React.ReactNode; // ✅ NEW
+  icon?: React.ReactNode;
+  placeholder?: string;
 }
 
 const InputField: React.FC<InputFieldProps> = ({
