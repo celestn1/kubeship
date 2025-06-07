@@ -1,5 +1,3 @@
-// kubeship/microservices/frontend/src/pages/Login.tsx
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -8,9 +6,9 @@ import { useAuth } from "../hooks/useAuth";
 import { useFormInput } from "../hooks/useFormInput";
 import InputField from "../components/Form/InputField";
 import PasswordField from "../components/Form/PasswordField";
-import Card from "../components/UI/Card";
 import Button from "../components/UI/Button";
 import { isValidUsername, isValidEmail } from "../../../../shared/validators";
+import { UserIcon } from "lucide-react";
 
 const Login: React.FC = () => {
   const { values, handleChange, getTrimmed } = useFormInput({
@@ -74,12 +72,15 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <Card>
+    <div className="min-h-screen bg-[#0a2a6c] bg-[url('/pattern.svg')] bg-cover bg-no-repeat flex items-center justify-center p-4">
+      <div className="bg-white p-8 rounded-lg shadow-md max-w-sm w-full">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <h2 className="text-2xl font-bold text-center text-blue-700">
-            🚢 KubeShip Frontend
-          </h2>
+          <div className="flex flex-col items-center mb-4">
+            <div className="bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold">
+              M
+            </div>
+            <h2 className="text-lg font-semibold mt-2">Login to KubeShip</h2>
+          </div>
 
           <InputField
             label="Email or Username"
@@ -89,6 +90,7 @@ const Login: React.FC = () => {
             onChange={handleChange}
             autoComplete="username"
             required
+            icon={<UserIcon className="w-5 h-5 text-gray-400" />}
           />
 
           <PasswordField
@@ -100,26 +102,33 @@ const Login: React.FC = () => {
             required
           />
 
-          <Button type="submit" label={loading ? "Logging in..." : "Login"} disabled={loading} full />
+          <Button
+            type="submit"
+            label={loading ? "Logging in..." : "Next"}
+            disabled={loading}
+            full
+          />
 
           {message && <p className="text-center text-sm text-red-600">{message}</p>}
 
-          <div className="mt-4 text-center text-sm space-y-2">
-            <p>
-              Don’t have an account?{" "}
-              <a href="/register" className="text-blue-700 underline">
-                Sign up
-              </a>
-            </p>
-            <p>
-              Forgot your password?{" "}
-              <a href="/forgot-password" className="text-blue-600 underline">
-                Reset it
-              </a>
-            </p>
+          <div className="mt-4 text-center text-sm">
+            <a href="/forgot-password" className="text-blue-600 hover:underline">
+              Forgot Password?
+            </a>
           </div>
         </form>
-      </Card>
+
+        <div className="mt-6 text-center text-sm text-gray-600">
+          New to KubeShip?{' '}
+          <a href="/register" className="text-blue-700 underline">
+            Sign Up
+          </a>
+        </div>
+      </div>
+
+      <p className="absolute bottom-4 text-xs text-white text-center w-full">
+        Licensed and deployed on secure cloud infrastructure.
+      </p>
     </div>
   );
 };

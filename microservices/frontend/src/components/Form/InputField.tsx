@@ -14,6 +14,7 @@ interface InputFieldProps {
   showStatusIcon?: boolean;
   status?: "checking" | "valid" | "invalid";
   required?: boolean;
+  icon?: React.ReactNode; // ✅ NEW
 }
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -28,6 +29,7 @@ const InputField: React.FC<InputFieldProps> = ({
   showStatusIcon = false,
   status,
   required,
+  icon,
 }) => {
   const renderStatusIcon = () => {
     if (!showStatusIcon) return null;
@@ -51,6 +53,12 @@ const InputField: React.FC<InputFieldProps> = ({
       </label>
 
       <div className="relative">
+        {icon && (
+          <div className="absolute inset-y-0 left-2 flex items-center text-gray-400">
+            {icon}
+          </div>
+        )}
+
         <input
           type={type}
           id={name}
@@ -59,13 +67,12 @@ const InputField: React.FC<InputFieldProps> = ({
           onChange={onChange}
           autoComplete={autoComplete}
           required={required}
-          className={`w-full p-2 pr-10 border rounded focus:outline-none focus:ring-2 ${
+          className={`w-full p-2 ${icon ? "pl-10" : ""} pr-10 border rounded focus:outline-none focus:ring-2 ${
             error ? "border-red-500 focus:ring-red-400" : "focus:ring-blue-500"
           }`}
         />
-        <div className="absolute right-2 top-2 text-sm">
-          {renderStatusIcon()}
-        </div>
+
+        <div className="absolute right-2 top-2 text-sm">{renderStatusIcon()}</div>
       </div>
 
       {helperText && <p className="text-xs text-gray-500 mt-1">{helperText}</p>}
