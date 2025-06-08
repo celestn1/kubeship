@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: redis
+  tag: "7.0.0"
+  pullPolicy: IfNotPresent
+
+redisPassword: kubeshipredis123
+
+service:
+  type: ClusterIP
+  port: 6379

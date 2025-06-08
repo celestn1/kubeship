@@ -1,0 +1,6 @@
+containers:
+  - name: auth-service
+    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+    env: {{- toYaml .Values.env | nindent 6 }}
+    ports:
+      - containerPort: {{ .Values.service.targetPort }}

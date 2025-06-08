@@ -1,7 +1,6 @@
 apiVersion: v2
-name: api-gateway
-description: KubeShip API Gateway Helm Chart
+name: nginx-gateway
+description: NGINX reverse proxy for KubeShip
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
-

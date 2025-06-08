@@ -1,0 +1,23 @@
+replicaCount: 1
+
+image:
+  repository: <your_ecr_repo>
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8001
+  targetPort: 8001
+
+env:
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: auth-db-secret
+        key: DATABASE_URL
+  - name: JWT_SECRET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: auth-secret
+        key: JWT_SECRET_KEY

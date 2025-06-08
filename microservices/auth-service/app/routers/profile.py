@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.dependencies import get_current_user, get_db
 from app.models.user import User, UserProfile
+from app.models.strict_base import StrictModel
 
 router = APIRouter()
 
-class UpdateProfileRequest(BaseModel):
+class UpdateProfileRequest(StrictModel):
     avatar_url: str | None = None
     bio: str | None = None
     location: str | None = None

@@ -2,36 +2,36 @@
 
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import InputField from "../components/Form/InputField";
 import PasswordField from "../components/Form/PasswordField";
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
-import { isValidEmail, isStrongPassword } from "../../../../shared/validators";
+import { isStrongPassword } from "../../../../shared/validators";
 import toast from "react-hot-toast";
 
 const ResetPassword: React.FC = () => {
   const { token } = useParams();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
 
-    const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
-
-    if (!isValidEmail(trimmedEmail)) {
-      setMessage("Please enter a valid email.");
-      return;
-    }
+    const trimmedConfirm = confirmPassword.trim();
 
     if (!isStrongPassword(trimmedPassword)) {
       setMessage("Password must be at least 8 characters and include letters and numbers.");
+      return;
+    }
+
+    if (trimmedPassword !== trimmedConfirm) {
+      setMessage("Passwords do not match.");
       return;
     }
 
@@ -44,9 +44,19 @@ const ResetPassword: React.FC = () => {
         body: JSON.stringify({ token, password: trimmedPassword }),
       });
 
+      if (res.status === 429) {
+        setMessage("You're doing that too much. Try again in 15 minutes.");
+        return;
+      }
+
       if (res.ok) {
-        toast.success("✅ Password reset successful!");
-        navigate("/login", { state: { flash: "🎉 Password reset successful. Please log in." } });
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          navigate("/login", {
+            state: { flash: "🎉 Password reset successful. Please log in." },
+          });
+        }, 3000);
+        return;
       } else {
         const data = await res.json();
         setMessage(data.detail || "Failed to reset password.");
@@ -66,24 +76,6 @@ const ResetPassword: React.FC = () => {
             Reset Password
           </h2>
 
-          <InputField
-            label="Email"
-            name="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-            showStatusIcon
-            status={
-              email.length === 0
-                ? undefined
-                : isValidEmail(email)
-                ? "valid"
-                : "invalid"
-            }
-          />
-
           <PasswordField
             label="New Password"
             name="password"
@@ -94,10 +86,24 @@ const ResetPassword: React.FC = () => {
             helperText="Minimum 8 characters including letters and numbers"
           />
 
+          <PasswordField
+            label="Confirm Password"
+            name="confirmPassword"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            autoComplete="new-password"
+            required
+            helperText="Re-enter your new password"
+          />
+
           <Button
             type="submit"
             label={submitting ? "Resetting..." : "Reset Password"}
-            disabled={submitting || !isValidEmail(email) || !isStrongPassword(password)}
+            disabled={
+              submitting ||
+              !isStrongPassword(password) ||
+              password !== confirmPassword
+            }
             full
           />
 
@@ -106,6 +112,17 @@ const ResetPassword: React.FC = () => {
           )}
         </form>
       </Card>
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center space-y-2">
+            <h3 className="text-green-600 font-semibold text-xl">
+              Password reset successful!
+            </h3>
+            <p className="text-sm text-gray-700">Redirecting to login...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

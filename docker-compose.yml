@@ -13,6 +13,10 @@ services:
     build: ./microservices/auth-service
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ITSD_RESET_SECRET=${ITSD_RESET_SECRET}
+      - JWT_ALGORITHM=${JWT_ALGORITHM}
+      - REDIS_URL=${REDIS_URL}
     depends_on:
       - kubeship-pg-db
 
@@ -28,6 +32,13 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+  
+  redis:
+    image: redis:7
+    container_name: kubeship-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"  
 
 volumes:
   pgdata:

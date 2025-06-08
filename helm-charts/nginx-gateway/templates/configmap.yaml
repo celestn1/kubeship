@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    worker_processes 1;
+    events { worker_connections 1024; }
+    http {
+        include       mime.types;
+        default_type  application/json;
+        sendfile        on;
+        keepalive_timeout  65;
+
+        upstream auth_service {
+            server auth-service:8001;
+        }
+
+        server {
+            listen 80;
+
+            location /v1/auth/ {
+                proxy_pass http://auth_service/v1/auth/;
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                client_max_body_size 1M;
+            }
+
+            location / {
+                return 404 '{"error":"Not Found"}';
+                add_header Content-Type application/json;
+            }
+        }
+    }

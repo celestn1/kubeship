@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgres-db
+description: PostgreSQL Helm Chart for KubeShip
+type: application
+version: 0.1.0
+appVersion: "15"
