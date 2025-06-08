@@ -1,17 +1,5 @@
 // kubeship/terraform/modules/waf/main.tf
 
-/*
-This configuration:
-
-Dynamically finds your ALB
-
-Creates a WAF WebACL
-
-Associates it with the ALB via aws_wafv2_web_acl_association
-
-Tags everything properly
-*/
-
 // Create a WAF WebACL with AWS Managed Rules
 resource "aws_wafv2_web_acl" "this" {
   name        = var.name
