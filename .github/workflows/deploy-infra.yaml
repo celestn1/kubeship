@@ -133,6 +133,7 @@ jobs:
 
       # === Build and Push Images ===
       - name: Build and Push auth-service image
+        working-directory: ${{ github.workspace }}
         run: |
           AUTH_ECR="${{ steps.login-ecr.outputs.registry }}/${TF_PROJECT_NAME}-auth-service"
           docker build -t $AUTH_ECR:latest -t $AUTH_ECR:${{ github.sha }} ./microservices/auth-service
@@ -140,6 +141,7 @@ jobs:
           docker push $AUTH_ECR:${{ github.sha }}
 
       - name: Build and Push frontend image
+        working-directory: ${{ github.workspace }}
         run: |
           FRONTEND_ECR="${{ steps.login-ecr.outputs.registry }}/${TF_PROJECT_NAME}-frontend"
           docker build -t $FRONTEND_ECR:latest -t $FRONTEND_ECR:${{ github.sha }} ./microservices/frontend
@@ -147,6 +149,7 @@ jobs:
           docker push $FRONTEND_ECR:${{ github.sha }}
 
       - name: Build and Push nginx-gateway image
+        working-directory: ${{ github.workspace }}
         run: |
           NGINX_ECR="${{ steps.login-ecr.outputs.registry }}/${TF_PROJECT_NAME}-nginx-gateway"
           docker build -t $NGINX_ECR:latest -t $NGINX_ECR:${{ github.sha }} ./nginx
