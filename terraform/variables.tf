@@ -40,11 +40,6 @@ variable "eks_cluster_version" {
   default     = "1.29"
 }
 
-variable "alb_arn" {
-  description = "The ARN of the ALB to associate with WAF"
-  type        = string
-}
-
 variable "gitops_repo_url" {
   description = "URL of the GitOps repo for ArgoCD"
   type        = string

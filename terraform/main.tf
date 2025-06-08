@@ -8,22 +8,30 @@ provider "aws" {
 
 # VPC
 module "vpc" {
-  source        = "./modules/vpc"
-  project_name  = var.project_name
-  environment   = var.environment
-  vpc_cidr_block    = var.vpc_cidr_block
-  availability_zones  = var.availability_zones
+  source             = "./modules/vpc"
+  project_name       = var.project_name
+  environment        = var.environment
+  vpc_cidr_block     = var.vpc_cidr_block
+  availability_zones = var.availability_zones
+}
+
+# ALB
+module "alb" {
+  source             = "./modules/alb"
+  project_name       = var.project_name
+  vpc_id             = module.vpc.vpc_id
+  public_subnet_ids  = module.vpc.public_subnet_ids
 }
 
 # EKS
 module "eks" {
-  source           = "./modules/eks"
-  project_name     = var.project_name
-  environment      = var.environment
-  cluster_name     = var.eks_cluster_name
-  vpc_id           = module.vpc.vpc_id
-  private_subnet_ids  = module.vpc.private_subnet_ids
-  cluster_version  = var.eks_cluster_version
+  source             = "./modules/eks"
+  project_name       = var.project_name
+  environment        = var.environment
+  cluster_name       = var.eks_cluster_name
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  cluster_version    = var.eks_cluster_version
 }
 
 # ECR
@@ -34,23 +42,22 @@ module "ecr" {
   repository_names = ["auth-service", "frontend", "nginx-gateway"]
 }
 
-
 # CloudWatch
 module "cloudwatch" {
-  source        = "./modules/cloudwatch"
-  project_name  = var.project_name
-  environment   = var.environment
-  cluster_name  = var.eks_cluster_name
+  source       = "./modules/cloudwatch"
+  project_name = var.project_name
+  environment  = var.environment
+  cluster_name = var.eks_cluster_name
 }
 
-# WAF — with ALB integration
+# WAF — dynamically receive ALB ARN
 module "waf" {
   source        = "./modules/waf"
   name          = "kubeship-waf"
   description   = "WAF for kubeship ingress"
   project_name  = var.project_name
   environment   = var.environment
-  alb_arn       = var.alb_arn # passed as external value or derived dynamically
+  alb_arn       = module.alb.alb_arn
 }
 
 # Secrets Manager
@@ -63,11 +70,10 @@ module "secrets" {
 
 # ArgoCD GitOps Bootstrap
 module "argocd_bootstrap" {
-  source                      = "./modules/argocd-bootstrap"
-  eks_cluster_name            = var.eks_cluster_name
-  argocd_namespace            = "argocd"
-  repository_url              = var.gitops_repo_url
-  target_revision             = "main"
-  argocd_app_manifest_path    = "manifests"
-
+  source                   = "./modules/argocd-bootstrap"
+  eks_cluster_name         = var.eks_cluster_name
+  argocd_namespace         = "argocd"
+  repository_url           = var.gitops_repo_url
+  target_revision          = "main"
+  argocd_app_manifest_path = "manifests"
 }
