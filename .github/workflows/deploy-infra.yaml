@@ -117,37 +117,43 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and Push auth-service image
-        working-directory: ${{ github.workspace }}
+      # === Ensure ECR Repositories Exist ===
+      - name: Ensure ECR repositories exist
         run: |
-          AUTH_ECR="${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service"
+          for service in auth-service frontend nginx-gateway; do
+            REPO="${TF_PROJECT_NAME}-${service}"
+            echo "Checking ECR repo: $REPO"
+            if ! aws ecr describe-repositories --repository-names "$REPO" > /dev/null 2>&1; then
+              echo "🔧 Creating ECR repository: $REPO"
+              aws ecr create-repository --repository-name "$REPO"
+            else
+              echo "✅ ECR repository $REPO exists"
+            fi
+          done
+
+      # === Build and Push Images ===
+      - name: Build and Push auth-service image
+        run: |
+          AUTH_ECR="${{ steps.login-ecr.outputs.registry }}/${TF_PROJECT_NAME}-auth-service"
           docker build -t $AUTH_ECR:latest -t $AUTH_ECR:${{ github.sha }} ./microservices/auth-service
           docker push $AUTH_ECR:latest
-          docker push $AUTH_ECR:${{ github.sha }}          
+          docker push $AUTH_ECR:${{ github.sha }}
 
       - name: Build and Push frontend image
-        working-directory: ${{ github.workspace }}
         run: |
-          FRONTEND_ECR="${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-frontend"
+          FRONTEND_ECR="${{ steps.login-ecr.outputs.registry }}/${TF_PROJECT_NAME}-frontend"
           docker build -t $FRONTEND_ECR:latest -t $FRONTEND_ECR:${{ github.sha }} ./microservices/frontend
           docker push $FRONTEND_ECR:latest
           docker push $FRONTEND_ECR:${{ github.sha }}
 
       - name: Build and Push nginx-gateway image
-        working-directory: ${{ github.workspace }}
         run: |
-          NGINX_ECR="${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-nginx-gateway"
+          NGINX_ECR="${{ steps.login-ecr.outputs.registry }}/${TF_PROJECT_NAME}-nginx-gateway"
           docker build -t $NGINX_ECR:latest -t $NGINX_ECR:${{ github.sha }} ./nginx
           docker push $NGINX_ECR:latest
           docker push $NGINX_ECR:${{ github.sha }}
 
-      - name: Upload Terraform Outputs
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-outputs
-          path: terraform/tf-outputs.json
-
-
+      # === Terraform Deployment ===
       - name: Terraform Plan
         run: |
           terraform plan -input=false -out=tfplan.out \
