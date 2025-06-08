@@ -1,0 +1,16 @@
+# kubeship/terraform/modules/argocd-bootstrap/values.yaml
+
+server:
+  service:
+    type: LoadBalancer
+  ingress:
+    enabled: false
+
+configs:
+  params:
+    server.insecure: true  # Set to false in production
+
+admin:
+  enabled: true
+  password: $2y$10$u0HP1uC6gKhOVw4UAeUucOqa.S3wcdqPPya29CKOiuxIj9lqngxmW  
+

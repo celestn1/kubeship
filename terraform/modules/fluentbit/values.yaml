@@ -1,0 +1,18 @@
+cloudWatch:
+  enabled: true
+  logGroupName: /eks/kubeship/app-logs
+  region: eu-west-2
+  logStreamPrefix: from-fluentbit
+
+firehose:
+  enabled: false
+
+elasticsearch:
+  enabled: false
+
+kinesis:
+  enabled: false
+
+serviceAccount:
+  create: false
+  name: fluent-bit-sa

@@ -1,38 +1,27 @@
-# kubeship/terraform/bootstrap/main.tf
-# This Terraform configuration sets up the backend for storing the Terraform state
-# in an S3 bucket and uses a DynamoDB table for state locking.
+// kubeship/terraform/bootstrap/main.tf
 
 provider "aws" {
-  region = "eu-west-2"
+  region = var.aws_region
 }
 
+# S3 Bucket for Terraform state
 resource "aws_s3_bucket" "tf_state" {
-  bucket = "kubeship-tf-state"
+  bucket        = var.state_bucket
+  force_destroy = true
+
   versioning {
     enabled = true
   }
 
-  lifecycle {
-    prevent_destroy = true
-  }
-
   tags = {
-    Name        = "kubeship-tf-state"
-    Environment = "dev"
+    Name        = "Terraform State Bucket"
+    Environment = var.environment
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "tf_state_block" {
-  bucket = aws_s3_bucket.tf_state.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_dynamodb_table" "tf_locks" {
-  name         = "kubeship-tf-locks"
+# DynamoDB Table for state locking
+resource "aws_dynamodb_table" "tf_lock" {
+  name         = var.lock_table
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 
@@ -42,7 +31,8 @@ resource "aws_dynamodb_table" "tf_locks" {
   }
 
   tags = {
-    Name        = "kubeship-tf-locks"
-    Environment = "dev"
+    Name        = "Terraform Lock Table"
+    Environment = var.environment
   }
 }
+
