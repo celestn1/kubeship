@@ -1,6 +1,6 @@
 // kubeship/terraform/bootstrap/main.tf
 
-# run once
+# run once to set up the S3 bucket and DynamoDB table for Terraform state management
 
 provider "aws" {
   region = var.aws_region
