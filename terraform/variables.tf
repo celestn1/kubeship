@@ -50,3 +50,13 @@ variable "secrets_map" {
   type        = map(string)
   default     = {}
 }
+
+variable "target_revision" {
+  description = "Git revision to deploy with ArgoCD (e.g., main, HEAD)"
+  type        = string
+}
+
+variable "argocd_app_manifest_path" {
+  description = "Path in the GitOps repo where ArgoCD app manifests are located"
+  type        = string
+}
