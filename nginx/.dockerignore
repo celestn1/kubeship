@@ -1,0 +1,50 @@
+# Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.venv
+env
+venv
+
+# Terraform
+*.tf
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfplan
+.terraform
+.terraform.lock.hcl
+secrets.auto.tfvars.json
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# VSCode / IDEs
+.vscode
+.idea
+*.suo
+*.njsproj
+*.sln
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Docker/CI
+docker-compose*
+.dockerignore
+
+# Env files
+.env
+.env.*

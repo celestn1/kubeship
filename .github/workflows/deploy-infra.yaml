@@ -113,6 +113,38 @@ jobs:
             echo "✅ All secrets have values"
           fi
 
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push auth-service image
+        run: |
+          AUTH_ECR="${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service"
+          docker build -t $AUTH_ECR:latest -t $AUTH_ECR:${{ github.sha }} ./microservices/auth-service
+          docker push $AUTH_ECR:latest
+          docker push $AUTH_ECR:${{ github.sha }}
+
+      - name: Build and Push frontend image
+        run: |
+          FRONTEND_ECR="${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-frontend"
+          docker build -t $FRONTEND_ECR:latest -t $FRONTEND_ECR:${{ github.sha }} ./microservices/frontend
+          docker push $FRONTEND_ECR:latest
+          docker push $FRONTEND_ECR:${{ github.sha }}
+
+      - name: Build and Push nginx-gateway image
+        run: |
+          NGINX_ECR="${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-nginx-gateway"
+          docker build -t $NGINX_ECR:latest -t $NGINX_ECR:${{ github.sha }} ./nginx
+          docker push $NGINX_ECR:latest
+          docker push $NGINX_ECR:${{ github.sha }}
+
+      - name: Upload Terraform Outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-outputs
+          path: terraform/tf-outputs.json
+
+
       - name: Terraform Plan
         run: |
           terraform plan -input=false -out=tfplan.out \
