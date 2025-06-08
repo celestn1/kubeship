@@ -1,5 +1,7 @@
 // kubeship/terraform/bootstrap/main.tf
 
+# run once
+
 provider "aws" {
   region = var.aws_region
 }
