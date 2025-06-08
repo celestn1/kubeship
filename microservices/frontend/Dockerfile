@@ -2,6 +2,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 COPY . .
+# Then copy shared module (relative to Docker build context)
+COPY ../../shared ./shared
 
 
 RUN npm install
