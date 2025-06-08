@@ -5,7 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 import InputField from "../components/Form/InputField";
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
-import { isValidEmail } from "../../../../shared/validators";
+import { isValidEmail } from "@shared/validators";
 import toast from "react-hot-toast";
 
 const ForgotPassword: React.FC = () => {

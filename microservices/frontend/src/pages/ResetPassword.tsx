@@ -5,7 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import PasswordField from "../components/Form/PasswordField";
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
-import { isStrongPassword } from "../../../../shared/validators";
+import { isStrongPassword } from "@shared/validators";
 import toast from "react-hot-toast";
 
 const ResetPassword: React.FC = () => {
