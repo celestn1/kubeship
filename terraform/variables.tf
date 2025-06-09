@@ -28,7 +28,6 @@ variable "availability_zones" {
   default     = ["eu-west-2a", "eu-west-2b"]
 }
 
-
 variable "eks_cluster_name" {
   description = "EKS cluster name"
   type        = string

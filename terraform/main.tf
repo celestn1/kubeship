@@ -10,7 +10,7 @@ data "aws_eks_cluster" "this" {
   depends_on = [ module.eks ]
 }
 data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_name
+  name       = module.eks.cluster_name
   depends_on = [ module.eks ]
 }
 
@@ -20,7 +20,8 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
   token                  = data.aws_eks_cluster_auth.this.token
 }
-# Newly added so Terraform will accept the -var=image_digest flags ───
+
+# Image digest variables
 variable "auth_image_digest" {
   description = "sha256 digest for the auth-service image"
   type        = string
@@ -46,26 +47,35 @@ module "vpc" {
 
 # ALB
 module "alb" {
-  source             = "./modules/alb"
-  project_name       = var.project_name
-  vpc_id             = module.vpc.vpc_id
-  public_subnet_ids  = module.vpc.public_subnet_ids
+  source            = "./modules/alb"
+  project_name      = var.project_name
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
 }
 
-# EKS
+# EKS cluster provisioning (wrapper module)
 module "eks" {
   source             = "./modules/eks"
   project_name       = var.project_name
   environment        = var.environment
+
   cluster_name       = var.eks_cluster_name
+  cluster_version    = var.eks_cluster_version
   vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
-  cluster_version    = var.eks_cluster_version
-  cluster_endpoint_public_access  = true
-  cluster_endpoint_private_access = false
-  cluster_endpoint_public_access_cidrs     = ["0.0.0.0/0"]
 
-  # grant the Terraform runner full admin ("system:masters") access
+  cluster_endpoint_public_access       = true
+  cluster_endpoint_private_access      = false
+  cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
+}
+
+# AWS-Auth bootstrap submodule
+module "aws_auth" {
+  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
+  version = "20.36.0"
+
+  cluster_name = module.eks.cluster_name
+
   map_roles = [
     {
       rolearn  = var.terraform_caller_arn
@@ -73,7 +83,7 @@ module "eks" {
       groups   = ["system:masters"]
     }
   ]
-}  
+}
 
 # ECR
 module "ecr" {
@@ -103,10 +113,10 @@ module "waf" {
 
 # Secrets Manager
 module "secrets" {
-  source        = "./modules/secrets"
-  project_name  = var.project_name
-  environment   = var.environment
-  secrets_map   = var.secrets_map
+  source       = "./modules/secrets"
+  project_name = var.project_name
+  environment  = var.environment
+  secrets_map  = var.secrets_map
 }
 
 # ArgoCD GitOps Bootstrap
@@ -115,6 +125,6 @@ module "argocd_bootstrap" {
   eks_cluster_name         = var.eks_cluster_name
   argocd_namespace         = "argocd"
   repository_url           = var.gitops_repo_url
-  target_revision          = "main"
-  argocd_app_manifest_path = "manifests"
+  target_revision          = var.target_revision
+  argocd_app_manifest_path = var.argocd_app_manifest_path
 }

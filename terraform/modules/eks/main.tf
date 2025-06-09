@@ -2,21 +2,21 @@
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = ">= 20.17.0"
+  version = "20.36.0"
 
   cluster_name    = var.cluster_name
   cluster_version = var.cluster_version
-  subnet_ids      = var.private_subnet_ids
   vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
 
-  cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
-  enable_irsa               = true
-  # allow the root module to inject IAM → k8s mappings
-  map_roles = var.map_roles
-  
-  # Make the API server publicly accessible
-  cluster_endpoint_public_access  = var.cluster_endpoint_public_access
-  cluster_endpoint_private_access = var.cluster_endpoint_private_access
+  cluster_enabled_log_types = [
+    "api", "audit", "authenticator", "controllerManager", "scheduler"
+  ]
+  enable_irsa = true
+
+  # Public/private endpoint config
+  cluster_endpoint_public_access       = var.cluster_endpoint_public_access
+  cluster_endpoint_private_access      = var.cluster_endpoint_private_access
   cluster_endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
 
   eks_managed_node_groups = {
@@ -26,10 +26,5 @@ module "eks" {
       max_size       = 3
       min_size       = 1
     }
-  }
-
-  tags = {
-    Project     = var.project_name
-    Environment = var.environment
   }
 }
