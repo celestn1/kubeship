@@ -11,7 +11,7 @@ import {
   isValidEmail,
   isValidUsername,
   isStrongPassword,
-} from "../../../../shared/validators";
+} from "@shared/validators";
 
 const Register: React.FC = () => {
   const { values: form, handleChange, getTrimmed } = useFormInput({
