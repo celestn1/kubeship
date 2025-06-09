@@ -108,7 +108,7 @@ jobs:
           }
           EOF
 
-      - name: 🔍 Validate secrets.auto.tfvars.json has no empty values
+      - name: Validate secrets.auto.tfvars.json has no empty values
         run: |
           MISSING=$(jq -r '
             .secrets_map
@@ -136,20 +136,7 @@ jobs:
             fi
           done
 
-      # === Build & Push auth-service ===
-      - name: Build & Push auth-service image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./microservices/auth-service
-          file: Dockerfile
-          push: true
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service:latest
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # === Build & Push frontend ===
+      # === Build & Push frontend image ===
       - name: Build & Push frontend image
         uses: docker/build-push-action@v4
         with:
@@ -163,13 +150,26 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             NODE_ENV=production
+          
+      # === Build & Push auth-service image ===
+      - name: Build & Push auth-service image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: microservices/auth-service/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # === Build & Push nginx-gateway ===
+      # === Build & Push nginx-gateway image ===
       - name: Build & Push nginx-gateway image
         uses: docker/build-push-action@v4
         with:
-          context: ./nginx
-          file: Dockerfile
+          context: .
+          file: nginx/Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-nginx-gateway:latest
