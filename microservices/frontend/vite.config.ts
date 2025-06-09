@@ -14,17 +14,17 @@ export default defineConfig(({ mode }) => {
 
     resolve: {
       alias: {
-        // Alias '@shared' to the shared directory at the repo root
-        '@shared': path.resolve(__dirname, '../../shared'),
+        // Alias '@shared' to the shared directory that was copied into /app/shared
+        '@shared': path.resolve(__dirname, 'shared'),
       },
     },
 
     server: {
       port: parseInt(process.env.VITE_PORT || '3000', 10),
       fs: {
-        // Allow serving files from both the shared directory and the frontend root
+        // Allow serving files from the shared folder and the frontend root
         allow: [
-          path.resolve(__dirname, '../../shared'),
+          path.resolve(__dirname, 'shared'),
           path.resolve(__dirname),
         ],
       },
