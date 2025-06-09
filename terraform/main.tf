@@ -4,7 +4,21 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Backend configuration stored in backend.tf separately
+# Fetch EKS endpoint & auth info
+data "aws_eks_cluster" "this" {
+  name = module.eks.cluster_name
+}
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_name
+}
+
+# Talk to the real EKS API, not localhost
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.this.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
+
 
 # VPC
 module "vpc" {
