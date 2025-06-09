@@ -52,8 +52,8 @@ jobs:
       - name: Build & Push auth-service
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: microservices/auth-service/Dockerfile
+          context: ./microservices/auth-service
+          file: ./microservices/auth-service/Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service:latest
@@ -78,8 +78,8 @@ jobs:
       - name: Build & Push nginx-gateway
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: nginx/Dockerfile
+          context: ./nginx
+          file: ./nginx/Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-nginx-gateway:latest
