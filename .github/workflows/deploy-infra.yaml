@@ -71,6 +71,11 @@ jobs:
           terraform fmt -check -recursive
           terraform validate
 
+      - name: Dump TF_* envs for debug
+        run: |
+          echo "---- TF_* ENVIRONMENT DUMP ----"
+          env | grep '^TF_' || true
+
       - name: Check required secrets
         run: |
           REQUIRED=( TF_PROJECT_NAME TF_ENVIRONMENT TF_EKS_CLUSTER_NAME TF_EKS_CLUSTER_VERSION TF_GITOPS_REPO_URL TF_TARGET_REVISION TF_ARGOCD_APP_MANIFEST_PATH TF_AVAILABILITY_ZONE_1 TF_AVAILABILITY_ZONE_2 TF_STATE_BUCKET TF_LOCK_TABLE )
