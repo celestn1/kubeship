@@ -63,8 +63,17 @@ module "eks" {
   cluster_version    = var.eks_cluster_version
   cluster_endpoint_public_access  = true
   cluster_endpoint_private_access = false
-  cluster_endpoint_public_access_cidrs     = ["0.0.0.0/0"]  
-}
+  cluster_endpoint_public_access_cidrs     = ["0.0.0.0/0"]
+
+  # grant the Terraform runner full admin ("system:masters") access
+  map_roles = [
+    {
+      rolearn  = var.terraform_caller_arn
+      username = "terraform-admin"
+      groups   = ["system:masters"]
+    }
+  ]
+}  
 
 # ECR
 module "ecr" {

@@ -2,7 +2,7 @@
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.8.4"
+  version = ">= 20.12.0"
 
   cluster_name    = var.cluster_name
   cluster_version = var.cluster_version
@@ -11,6 +11,8 @@ module "eks" {
 
   cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
   enable_irsa               = true
+  # allow the root module to inject IAM → k8s mappings
+  map_roles = var.map_roles
   
   # Make the API server publicly accessible
   cluster_endpoint_public_access  = var.cluster_endpoint_public_access

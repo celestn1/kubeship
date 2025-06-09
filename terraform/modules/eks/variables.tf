@@ -49,3 +49,13 @@ variable "environment" {
   description = "Environment name (e.g., dev, staging, prod)"
   type        = string
 }
+
+variable "map_roles" {
+  description = "List of IAM role → Kubernetes user/group mappings for aws-auth"
+  type = list(object({
+    rolearn  = string
+    username = string
+    groups   = list(string)
+  }))
+  default = []
+}

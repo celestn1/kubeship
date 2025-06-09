@@ -60,3 +60,8 @@ variable "argocd_app_manifest_path" {
   description = "Path in the GitOps repo where ArgoCD app manifests are located"
   type        = string
 }
+
+variable "terraform_caller_arn" {
+  description = "The IAM role or user ARN that runs Terraform (needs cluster-admin access)"
+  type        = string
+}
