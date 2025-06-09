@@ -2,6 +2,7 @@
 # .github/workflows/deploy-infra.yaml
 # ------------------------------
 
+# .github/workflows/deploy-infra.yaml
 name: Deploy KubeShip Infrastructure on AWS EKS
 
 on:
@@ -10,7 +11,7 @@ on:
       - main
     paths:
       - terraform/**
-      - .github/workflows/deploy-infra.yml
+      - .github/workflows/deploy-infra.yaml
 
 jobs:
   terraform:
@@ -37,6 +38,16 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      # ─── Buildx & QEMU setup for proper layer caching ─────────────────────────────
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver: docker-container
+          use: true
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -118,28 +129,26 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # === Ensure ECR Repositories Exist ===
       - name: Ensure ECR repositories exist
         run: |
           for service in auth-service frontend nginx-gateway; do
             REPO="${TF_PROJECT_NAME}-${service}"
-            echo "Checking ECR repo: $REPO"
             if ! aws ecr describe-repositories --repository-names "$REPO" > /dev/null 2>&1; then
-              echo "🔧 Creating ECR repository: $REPO"
               aws ecr create-repository --repository-name "$REPO"
-            else
-              echo "✅ ECR repository $REPO exists"
             fi
           done
 
-      # === Build and Push Images ===
-      - name: Build and Push auth-service image
-        working-directory: ${{ github.workspace }}
-        run: |
-          AUTH_ECR="${{ steps.login-ecr.outputs.registry }}/${TF_PROJECT_NAME}-auth-service"
-          docker build -t $AUTH_ECR:latest -t $AUTH_ECR:${{ github.sha }} ./microservices/auth-service
-          docker push $AUTH_ECR:latest
-          docker push $AUTH_ECR:${{ github.sha }}
+      - name: Build & Push auth-service image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: microservices/auth-service/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build & Push frontend image
         uses: docker/build-push-action@v4
@@ -155,15 +164,18 @@ jobs:
           build-args: |
             NODE_ENV=production
 
-      - name: Build and Push nginx-gateway image
-        working-directory: ${{ github.workspace }}
-        run: |
-          NGINX_ECR="${{ steps.login-ecr.outputs.registry }}/${TF_PROJECT_NAME}-nginx-gateway"
-          docker build -t $NGINX_ECR:latest -t $NGINX_ECR:${{ github.sha }} ./nginx
-          docker push $NGINX_ECR:latest
-          docker push $NGINX_ECR:${{ github.sha }}
+      - name: Build & Push nginx-gateway image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: nginx/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-nginx-gateway:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-nginx-gateway:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # === Terraform Deployment ===
       - name: Terraform Plan
         run: |
           terraform plan -input=false -out=tfplan.out \
