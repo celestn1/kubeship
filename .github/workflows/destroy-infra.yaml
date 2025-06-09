@@ -11,7 +11,7 @@ env:
   REGION:                    ${{ secrets.AWS_REGION }}
   TF_PROJECT_NAME:           ${{ secrets.TF_PROJECT_NAME }}
   TF_ENVIRONMENT:            ${{ secrets.TF_ENVIRONMENT }}
-  TF_VPC_CIDR_BLOCK:         ${{ secrets.TF_VPC_CIDR_BLOCK }}
+  TF_VPC_CIDR_BLOCK:         10.0.0.0/16
   TF_AVAILABILITY_ZONE_1:    ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
   TF_AVAILABILITY_ZONE_2:    ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
   TF_EKS_CLUSTER_NAME:       ${{ secrets.TF_EKS_CLUSTER_NAME }}
