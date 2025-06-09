@@ -11,6 +11,11 @@ module "eks" {
 
   cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
   enable_irsa               = true
+  
+  # Make the API server publicly accessible
+  cluster_endpoint_public_access  = var.cluster_endpoint_public_access
+  cluster_endpoint_private_access = var.cluster_endpoint_private_access
+  cluster_endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
 
   eks_managed_node_groups = {
     default = {

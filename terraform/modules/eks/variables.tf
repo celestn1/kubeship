@@ -16,6 +16,25 @@ variable "private_subnet_ids" {
   type        = list(string)
 }
 
+# ── New endpoint-access variables ──
+variable "cluster_endpoint_public_access" {
+  description = "Whether the EKS API server public endpoint is enabled"
+  type        = bool
+  default     = true
+}
+
+variable "cluster_endpoint_private_access" {
+  description = "Whether the EKS API server private endpoint is enabled"
+  type        = bool
+  default     = true
+}
+
+variable "cluster_endpoint_public_access_cidrs" {
+  description = "List of CIDRs allowed to access the public EKS API endpoint"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
 variable "vpc_id" {
   description = "VPC ID"
   type        = string
