@@ -55,14 +55,13 @@ resource "aws_internet_gateway" "igw" {
 
 # Elastic IP for NAT
 resource "aws_eip" "nat" {
-  vpc = true
   depends_on = [ aws_internet_gateway.igw ]
 }
 
 # NAT Gateway for private subnets
 resource "aws_nat_gateway" "this" {
   allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public[0].id
+  subnet_id     = values(aws_subnet.public)[0].id
 
   tags = {
     Name    = "${var.project_name}-nat-gateway"

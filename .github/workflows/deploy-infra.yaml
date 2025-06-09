@@ -26,37 +26,63 @@ jobs:
   build-and-push:
     name: Build & Push Docker images to Amazon ECR
     runs-on: ubuntu-latest
-
-    # expose digests for Terraform
     outputs:
-      auth-service-digest: ${{ steps.auth-push.outputs.digest }}
-      frontend-digest:     ${{ steps.frontend-push.outputs.digest }}
-      nginx-digest:        ${{ steps.nginx-push.outputs.digest }}
+      auth-service-digest: ${{ steps.auth-digest.outputs.digest }}
+      frontend-digest:     ${{ steps.frontend-digest.outputs.digest }}
+      nginx-digest:        ${{ steps.nginx-digest.outputs.digest }}
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Detect changed services
+        id: changes
+        uses: dorny/paths-filter@v2
         with:
+          filters: |
+            # Define the paths for each service
+            auth-service:
+             - 'microservices/auth-service/**'
+            frontend:
+              - 'microservices/frontend/**'
+            nginx-gateway:
+              - 'nginx/**'
+            shared:
+              - 'shared/**'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-region:            ${{ env.REGION }}
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ env.REGION }}
 
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Ensure ECR repositories exist
+      - name: Ensure all ECR repos exist
         run: |
           for svc in auth-service frontend nginx-gateway; do
-            aws ecr describe-repositories --repository-names "${TF_PROJECT_NAME}-${svc}" --region $REGION >/dev/null 2>&1 || \
-            aws ecr create-repository --repository-name "${TF_PROJECT_NAME}-${svc}" --region $REGION
+            aws ecr describe-repositories \
+              --repository-names "${TF_PROJECT_NAME}-${svc}" \
+              --region "${REGION}" >/dev/null 2>&1 || \
+            aws ecr create-repository \
+              --repository-name "${TF_PROJECT_NAME}-${svc}" \
+              --region "${REGION}"
           done
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver: docker-container
+          use: true
 
       # auth-service
       - name: Build & Push auth-service
-        id: auth-push
+        if: steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true'
         uses: docker/build-push-action@v4
         with:
           context: ./microservices/auth-service
@@ -65,12 +91,17 @@ jobs:
           tags: |
             ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-auth-service:latest
 
-      - name: Capture auth-service digest
-        run: echo "digest=${{ steps.auth-push.outputs.digest }}" >> $GITHUB_OUTPUT
+      - name: Capture auth-service image digest
+        id: auth-digest
+        if: steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true'
+        run: |
+          IMAGE_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-auth-service
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_URI:${{ env.IMAGE_TAG }})
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       # frontend
       - name: Build & Push frontend
-        id: frontend-push
+        if: steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true'
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -79,12 +110,17 @@ jobs:
           tags: |
             ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-frontend:latest
 
-      - name: Capture frontend digest
-        run: echo "digest=${{ steps.frontend-push.outputs.digest }}" >> $GITHUB_OUTPUT
+      - name: Capture frontend image digest
+        id: frontend-digest
+        if: steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true'
+        run: |
+          IMAGE_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-frontend
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_URI:${{ env.IMAGE_TAG }})
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       # nginx-gateway
       - name: Build & Push nginx-gateway
-        id: nginx-push
+        if: steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs.shared == 'true'
         uses: docker/build-push-action@v4
         with:
           context: ./nginx
@@ -93,8 +129,13 @@ jobs:
           tags: |
             ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-nginx-gateway:latest
 
-      - name: Capture nginx-gateway digest
-        run: echo "digest=${{ steps.nginx-push.outputs.digest }}" >> $GITHUB_OUTPUT
+      - name: Capture nginx-gateway image digest
+        id: nginx-digest
+        if: steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs.shared == 'true'
+        run: |
+          IMAGE_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-nginx-gateway
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_URI:${{ env.IMAGE_TAG }})
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
   deploy:
     name: Terraform Apply
@@ -119,7 +160,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -135,6 +176,11 @@ jobs:
 
       - name: Terraform Init
         run: |
+          # Dump the vars so we can see if any are empty
+          echo "TF_STATE_BUCKET=${TF_STATE_BUCKET}"
+          echo "TF_LOCK_TABLE=${TF_LOCK_TABLE}"
+          echo "AWS_REGION=${AWS_REGION}"
+                  
           terraform init \
             -backend-config="bucket=${TF_STATE_BUCKET}" \
             -backend-config="key=infra/terraform.tfstate" \

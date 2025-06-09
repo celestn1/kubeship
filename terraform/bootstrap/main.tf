@@ -10,15 +10,21 @@ resource "aws_s3_bucket" "tf_state" {
   bucket        = var.state_bucket
   force_destroy = true
 
-  versioning {
-    enabled = true
-  }
-
   tags = {
     Name        = "Terraform State Bucket"
     Environment = var.environment
   }
 }
+
+# Enable versioning on the S3 bucket to keep track of state changes
+resource "aws_s3_bucket_versioning" "tf_state" {
+  bucket = aws_s3_bucket.tf_state.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 
 # DynamoDB Table for state locking
 resource "aws_dynamodb_table" "tf_lock" {
