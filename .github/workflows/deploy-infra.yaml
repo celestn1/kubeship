@@ -2,6 +2,7 @@
 # .github/workflows/deploy-infra.yaml
 # ------------------------------
 
+# .github/workflows/deploy-infra.yaml
 name: Deploy KubeShip Infrastructure on AWS EKS
 
 on:
@@ -21,21 +22,21 @@ jobs:
         working-directory: terraform
 
     env:
-      AWS_REGION:                              ${{ secrets.AWS_REGION }}
-      TF_PROJECT_NAME:                         ${{ secrets.TF_PROJECT_NAME }}
-      TF_ENVIRONMENT:                          ${{ secrets.TF_ENVIRONMENT }}
-      TF_EKS_CLUSTER_NAME:                     ${{ secrets.TF_EKS_CLUSTER_NAME }}
-      TF_EKS_CLUSTER_VERSION:                  ${{ secrets.TF_EKS_CLUSTER_VERSION }}
-      TF_GITOPS_REPO_URL:                      ${{ secrets.TF_GITOPS_REPO_URL }}
-      TF_TARGET_REVISION:                      ${{ secrets.TF_TARGET_REVISION }}
-      TF_ARGOCD_APP_MANIFEST_PATH:             ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
-      TF_AVAILABILITY_ZONE_1:                  ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
-      TF_AVAILABILITY_ZONE_2:                  ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
-      TF_STATE_BUCKET:                         ${{ secrets.TF_STATE_BUCKET }}
-      TF_LOCK_TABLE:                           ${{ secrets.TF_LOCK_TABLE }}
+      AWS_REGION:              ${{ secrets.AWS_REGION }}
+      TF_PROJECT_NAME:         ${{ secrets.TF_PROJECT_NAME }}
+      TF_ENVIRONMENT:          ${{ secrets.TF_ENVIRONMENT }}
+      TF_EKS_CLUSTER_NAME:     ${{ secrets.TF_EKS_CLUSTER_NAME }}
+      TF_EKS_CLUSTER_VERSION:  ${{ secrets.TF_EKS_CLUSTER_VERSION }}
+      TF_GITOPS_REPO_URL:      ${{ secrets.TF_GITOPS_REPO_URL }}
+      TF_TARGET_REVISION:      ${{ secrets.TF_TARGET_REVISION }}
+      TF_ARGOCD_APP_MANIFEST_PATH: ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
+      TF_AVAILABILITY_ZONE_1:  ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
+      TF_AVAILABILITY_ZONE_2:  ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
+      TF_STATE_BUCKET:         ${{ secrets.TF_STATE_BUCKET }}
+      TF_LOCK_TABLE:           ${{ secrets.TF_LOCK_TABLE }}
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up QEMU
@@ -67,31 +68,18 @@ jobs:
             -backend-config="region=${AWS_REGION}" \
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
-      - name: Terraform Format
-        run: terraform fmt -recursive
-
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
-
-      - name: Terraform Validate
-        run: terraform validate
-
-      - name: Validate Required Secrets
+      - name: Terraform Format & Validate
         run: |
-          echo "🔍 Checking required secrets..."
-          REQUIRED=(
-            TF_PROJECT_NAME TF_ENVIRONMENT TF_EKS_CLUSTER_NAME
-            TF_EKS_CLUSTER_VERSION TF_GITOPS_REPO_URL
-            TF_TARGET_REVISION TF_ARGOCD_APP_MANIFEST_PATH
-            TF_AVAILABILITY_ZONE_1 TF_AVAILABILITY_ZONE_2
-            TF_STATE_BUCKET TF_LOCK_TABLE
-          )
+          terraform fmt -recursive
+          terraform fmt -check -recursive
+          terraform validate
+
+      - name: Check required secrets
+        run: |
+          REQUIRED=( TF_PROJECT_NAME TF_ENVIRONMENT TF_EKS_CLUSTER_NAME TF_EKS_CLUSTER_VERSION TF_GITOPS_REPO_URL TF_TARGET_REVISION TF_ARGOCD_APP_MANIFEST_PATH TF_AVAILABILITY_ZONE_1 TF_AVAILABILITY_ZONE_2 TF_STATE_BUCKET TF_LOCK_TABLE )
           for key in "${REQUIRED[@]}"; do
             if [ -z "${!key}" ]; then
-              echo "❌ Missing secret: $key"
-              exit 1
-            else
-              echo "✅ $key is set"
+              echo "Missing secret $key" && exit 1
             fi
           done
 
@@ -108,40 +96,29 @@ jobs:
           }
           EOF
 
-      - name: Validate secrets.auto.tfvars.json has no empty values
+      - name: Validate secrets file
         run: |
-          MISSING=$(jq -r '
-            .secrets_map
-            | to_entries[]
-            | select(.value == "" or .value == null)
-            | .key
-          ' secrets.auto.tfvars.json)
-          if [[ -n "$MISSING" ]]; then
-            echo "❌ Found empty secrets: $MISSING"
-            exit 1
-          else
-            echo "✅ All secrets have values"
-          fi
+          MISSING=$(jq -r '.secrets_map | to_entries[] | select(.value == "" or .value == null) | .key' secrets.auto.tfvars.json)
+          if [ -n "$MISSING" ]; then echo "Empty secrets: $MISSING" && exit 1; fi
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Ensure ECR repositories exist
+      - name: Ensure ECR repos exist
         run: |
-          for service in auth-service frontend nginx-gateway; do
-            REPO="${TF_PROJECT_NAME}-${service}"
-            if ! aws ecr describe-repositories --repository-names "$REPO" > /dev/null 2>&1; then
-              aws ecr create-repository --repository-name "$REPO"
-            fi
+          for svc in frontend auth-service nginx-gateway; do
+            repo="${TF_PROJECT_NAME}-$svc"
+            aws ecr describe-repositories --repository-names "$repo" >/dev/null 2>&1 || \
+              aws ecr create-repository --repository-name "$repo"
           done
 
-      # === Build & Push frontend image ===
-      - name: Build & Push frontend image
+      # === Build & Push frontend ===
+      - name: Build & Push frontend
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: microservices/frontend/Dockerfile
+          context: ./microservices/frontend
+          file: Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-frontend:latest
@@ -151,12 +128,12 @@ jobs:
           build-args: |
             NODE_ENV=production
           
-      # === Build & Push auth-service image ===
-      - name: Build & Push auth-service image
+      # === Build & Push auth-service ===
+      - name: Build & Push auth-service
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: microservices/auth-service/Dockerfile
+          context: ./microservices/auth-service
+          file: Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service:latest
@@ -164,12 +141,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # === Build & Push nginx-gateway image ===
-      - name: Build & Push nginx-gateway image
+      # === Build & Push nginx-gateway ===
+      - name: Build & Push nginx-gateway
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: nginx/Dockerfile
+          context: ./nginx
+          file: Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-nginx-gateway:latest
@@ -177,7 +154,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Terraform Plan
+      - name: Terraform Plan & Apply
         run: |
           terraform plan -input=false -out=tfplan.out \
             -var-file="secrets.auto.tfvars.json" \
@@ -189,10 +166,8 @@ jobs:
             -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
             -var="target_revision=${TF_TARGET_REVISION}" \
             -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}" \
-            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\", \"${TF_AVAILABILITY_ZONE_2}\"]"
+            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]"
+          terraform apply -auto-approve tfplan.out
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan.out
-
-      - name: Save Terraform Outputs
+      - name: Save Terraform outputs
         run: terraform output -json > tf-outputs.json
