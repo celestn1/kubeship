@@ -2,6 +2,7 @@
 # .github/workflows/deploy-infra.yaml
 # ------------------------------
 
+# .github/workflows/deploy-infra.yaml
 name: Deploy KubeShip Infrastructure on AWS EKS
 
 on:
@@ -40,17 +41,11 @@ jobs:
         uses: dorny/paths-filter@v2
         with:
           filters: |
-            # Define the paths for each service
-            # If a service is changed, it will trigger the build and push steps
-            # The 'shared' service is used for common code shared across services
-            # If 'shared' is changed, it will also trigger builds for all services
-            # Note: Adjust the paths according to your repository structure
-            
-            auth-service:
-             - 'microservices/auth-service/**'
+            auth_service:
+              - 'microservices/auth-service/**'
             frontend:
               - 'microservices/frontend/**'
-            nginx-gateway:
+            nginx_gateway:
               - 'nginx/**'
             shared:
               - 'shared/**'
@@ -87,7 +82,7 @@ jobs:
 
       # auth-service
       - name: Build & Push auth-service
-        if: steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true'
+        if: steps.changes.outputs['auth_service'] == 'true' || steps.changes.outputs.shared == 'true'
         uses: docker/build-push-action@v4
         with:
           context: ./microservices/auth-service
@@ -125,7 +120,7 @@ jobs:
 
       # nginx-gateway
       - name: Build & Push nginx-gateway
-        if: steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs.shared == 'true'
+        if: steps.changes.outputs['nginx_gateway'] == 'true' || steps.changes.outputs.shared == 'true'
         uses: docker/build-push-action@v4
         with:
           context: ./nginx
@@ -150,19 +145,6 @@ jobs:
       run:
         working-directory: terraform
 
-    env:
-      AWS_REGION:                   ${{ secrets.AWS_REGION }}
-      TF_PROJECT_NAME:              ${{ secrets.TF_PROJECT_NAME }}
-      TF_ENVIRONMENT:               ${{ secrets.TF_ENVIRONMENT }}
-      TF_EKS_CLUSTER_NAME:          ${{ secrets.TF_EKS_CLUSTER_NAME }}
-      TF_STATE_BUCKET:              ${{ secrets.TF_STATE_BUCKET }}
-      TF_LOCK_TABLE:                ${{ secrets.TF_LOCK_TABLE }}
-      TF_GITOPS_REPO_URL:           ${{ secrets.TF_GITOPS_REPO_URL }}
-      TF_TARGET_REVISION:           ${{ secrets.TF_TARGET_REVISION }}
-      TF_ARGOCD_APP_MANIFEST_PATH:  ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
-      TF_AVAILABILITY_ZONE_1:       ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
-      TF_AVAILABILITY_ZONE_2:       ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -170,7 +152,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          aws-region:            ${{ env.AWS_REGION }}
+          aws-region:            ${{ env.REGION }}
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -184,7 +166,7 @@ jobs:
           terraform init \
             -backend-config="bucket=${TF_STATE_BUCKET}" \
             -backend-config="key=infra/terraform.tfstate" \
-            -backend-config="region=${AWS_REGION}" \
+            -backend-config="region=${REGION}" \
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
       - name: Terraform Plan
