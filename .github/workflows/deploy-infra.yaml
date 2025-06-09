@@ -1,6 +1,7 @@
 # ------------------------------
 # .github/workflows/deploy-infra.yaml
 # ------------------------------
+
 name: Deploy KubeShip Infrastructure on AWS EKS
 
 on:
@@ -140,13 +141,19 @@ jobs:
           docker push $AUTH_ECR:latest
           docker push $AUTH_ECR:${{ github.sha }}
 
-      - name: Build and Push frontend image
-        working-directory: ${{ github.workspace }}
-        run: |
-          FRONTEND_ECR="${{ steps.login-ecr.outputs.registry }}/${TF_PROJECT_NAME}-frontend"
-          docker build -t $FRONTEND_ECR:latest -t $FRONTEND_ECR:${{ github.sha }} ./microservices/frontend
-          docker push $FRONTEND_ECR:latest
-          docker push $FRONTEND_ECR:${{ github.sha }}
+      - name: Build & Push frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: microservices/frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-frontend:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
 
       - name: Build and Push nginx-gateway image
         working-directory: ${{ github.workspace }}
