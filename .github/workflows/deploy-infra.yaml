@@ -2,7 +2,6 @@
 # .github/workflows/deploy-infra.yaml
 # ------------------------------
 
-# .github/workflows/deploy-infra.yaml
 name: Deploy KubeShip Infrastructure on AWS EKS
 
 on:
@@ -39,7 +38,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ─── Buildx & QEMU setup for proper layer caching ─────────────────────────────
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -138,11 +136,12 @@ jobs:
             fi
           done
 
+      # === Build & Push auth-service ===
       - name: Build & Push auth-service image
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: microservices/auth-service/Dockerfile
+          context: ./microservices/auth-service
+          file: Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-auth-service:latest
@@ -150,6 +149,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # === Build & Push frontend ===
       - name: Build & Push frontend image
         uses: docker/build-push-action@v4
         with:
@@ -164,11 +164,12 @@ jobs:
           build-args: |
             NODE_ENV=production
 
+      # === Build & Push nginx-gateway ===
       - name: Build & Push nginx-gateway image
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: nginx/Dockerfile
+          context: ./nginx
+          file: Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.TF_PROJECT_NAME }}-nginx-gateway:latest
