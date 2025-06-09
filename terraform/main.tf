@@ -39,6 +39,7 @@ module "vpc" {
   environment        = var.environment
   vpc_cidr_block     = var.vpc_cidr_block
   availability_zones = var.availability_zones
+  cluster_name       = var.eks_cluster_name
 }
 
 # ALB
