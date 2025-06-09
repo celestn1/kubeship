@@ -1,13 +1,5 @@
 // kubeship/terraform/modules/ecr/main.tf
 
-variable "repository_names" {
-  type = list(string)
-}
-
-variable "project_name" {
-  type = string
-}
-
 locals {
   repo_set = toset(var.repository_names)
 }
