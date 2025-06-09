@@ -56,29 +56,20 @@ jobs:
       - name: Terraform Destroy (targeted)
         run: |
           terraform destroy \
-            -auto-approve \
-            # destroy Argocd bootstrap
-            -target=module.argocd_bootstrap \
-            # destroy ECR repos
-            -target=module.ecr \
-            # destroy CloudWatch resources
-            -target=module.cloudwatch \
-            # destroy WAF
-            -target=module.waf \
-            # destroy ALB
-            -target=module.alb \
-            # destroy EKS (cluster + nodegroups)
-            -target=module.eks \
-            # destroy Secrets
-            -target=module.secrets \
-            # destroy VPC (including NAT gateway, subnets, IGW, RTs)
-            -target=module.vpc \
-            # pass all required vars
-            -var="project_name=${TF_PROJECT_NAME}" \
-            -var="environment=${TF_ENVIRONMENT}" \
-            -var="vpc_cidr_block=${TF_VPC_CIDR_BLOCK}" \
-            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]" \
-            -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
-            -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
-            -var="target_revision=${TF_TARGET_REVISION}" \
-            -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}"
+              -auto-approve \
+              -target=module.argocd_bootstrap \
+              -target=module.ecr \
+              -target=module.cloudwatch \
+              -target=module.waf \
+              -target=module.alb \
+              -target=module.eks \
+              -target=module.secrets \
+              -target=module.vpc \
+              -var="project_name=${TF_PROJECT_NAME}" \
+              -var="environment=${TF_ENVIRONMENT}" \
+              -var="vpc_cidr_block=${TF_VPC_CIDR_BLOCK}" \
+              -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]" \
+              -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
+              -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
+              -var="target_revision=${TF_TARGET_REVISION}" \
+              -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}"
