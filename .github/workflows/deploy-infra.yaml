@@ -101,8 +101,17 @@ jobs:
 
       - name: Validate secrets file
         run: |
-          MISSING=$(jq -r '.secrets_map | to_entries[] | select(.value == "" or .value == null) | .key' secrets.auto.tfvars.json)
-          [ -n "$MISSING" ] && echo "Empty secrets: $MISSING" && exit 1
+          MISSING=$(jq -r '
+            .secrets_map
+            | to_entries[]
+            | select(.value == "" or .value == null)
+            | .key
+          ' secrets.auto.tfvars.json)
+
+          if [ -n "$MISSING" ]; then
+            echo "Empty secrets: $MISSING"
+            exit 1
+          fi
 
       - name: Login to Amazon ECR
         id: login-ecr
