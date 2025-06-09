@@ -146,7 +146,8 @@ jobs:
             -out=tfplan.out
 
       - name: Terraform Apply
-        run: terraform apply \
+        run: |
+          terraform apply \
           -lock-timeout=2m \
           -auto-approve tfplan.out
 
