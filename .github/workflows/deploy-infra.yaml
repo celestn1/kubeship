@@ -156,7 +156,7 @@ jobs:
       TF_TARGET_REVISION:           ${{ secrets.TF_TARGET_REVISION }}
       TF_ARGOCD_APP_MANIFEST_PATH:  ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
       TF_AVAILABILITY_ZONE_1:       ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
-      TF_AVAILABILITY_ZONE_2:       ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
+      TF_AVAILABILITY_ZONE_2:       ${{ secrets.TF_AVAILABILITY_ZONE_2 }}     
 
     steps:
       - name: Checkout repository
@@ -168,6 +168,12 @@ jobs:
           aws-region:            ${{ env.AWS_REGION }}
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Fetch AWS caller ARN
+        id: caller
+        run: |
+          arn=$(aws sts get-caller-identity --query Arn --output text)
+          echo "TF_VAR_terraform_caller_arn=$arn" >> $GITHUB_ENV          
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
