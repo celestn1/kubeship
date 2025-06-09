@@ -8,12 +8,12 @@ resource "kubernetes_namespace" "argocd" {
 }
 
 resource "helm_release" "argocd" {
-  name              = "argocd"
-  namespace         = var.argocd_namespace
-  repository        = "https://argoproj.github.io/argo-helm"
-  chart             = "argo-cd"
-  version           = var.argocd_chart_version
-  create_namespace  = false  // we manage the namespace above
+  name             = "argocd"
+  namespace        = var.argocd_namespace
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = var.argocd_chart_version
+  create_namespace = false
   values = [
     file("${path.module}/values.yaml")
   ]

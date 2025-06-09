@@ -18,7 +18,19 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
   token                  = data.aws_eks_cluster_auth.this.token
 }
-
+# Newly added so Terraform will accept the -var=image_digest flags ───
+variable "auth_image_digest" {
+  description = "sha256 digest for the auth-service image"
+  type        = string
+}
+variable "frontend_image_digest" {
+  description = "sha256 digest for the frontend image"
+  type        = string
+}
+variable "nginx_image_digest" {
+  description = "sha256 digest for the nginx-gateway image"
+  type        = string
+}
 
 # VPC
 module "vpc" {
