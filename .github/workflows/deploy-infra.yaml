@@ -193,11 +193,13 @@ jobs:
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
             -out=tfplan.out
 
-      - name: Terraform Apply EKS only
+      - name: Terraform Apply EKS module only (strict)
         run: |
           terraform apply \
             -auto-approve \
-            -target=module.eks \
+            -target=module.eks.cluster \
+            -target=module.eks.eks_managed_node_group \
+            -target=module.eks.eks_addons \
             tfplan.out
 
       - name: Configure kubectl for EKS
@@ -216,11 +218,24 @@ jobs:
             --type merge \
             --patch '{"data":{"mapRoles":"- rolearn: '"${TF_VAR_terraform_caller_arn}"'\n    username: terraform-admin\n    groups:\n      - system:masters\n"}}'
 
-      - name: Terraform Apply Remaining Resources
+      - name: Re-run Terraform Plan (post aws-auth patch)
+        run: |
+          terraform plan \
+            -lock-timeout=2m \
+            -var="project_name=${TF_PROJECT_NAME}" \
+            -var="environment=${TF_ENVIRONMENT}" \
+            -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
+            -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
+            -var="target_revision=${TF_TARGET_REVISION}" \
+            -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}" \
+            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]" \
+            -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-service-digest }}" \
+            -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
+            -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
+            -out=tfplan-after-auth.out
+
+      - name: Terraform Apply (Remaining Resources)
         run: |
           terraform apply \
             -auto-approve \
-            tfplan.out
-
-      - name: Save Terraform outputs
-        run: terraform output -json > tf-outputs.json
+            tfplan-after-auth.out
