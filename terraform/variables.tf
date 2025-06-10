@@ -64,3 +64,9 @@ variable "terraform_caller_arn" {
   description = "The IAM role or user ARN that runs Terraform (needs cluster-admin access)"
   type        = string
 }
+
+variable "enable_eks_auth_management" {
+  description = "Flag to enable or disable aws-auth ConfigMap management"
+  type        = bool
+  default     = false
+}
