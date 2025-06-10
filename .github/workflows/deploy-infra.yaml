@@ -82,7 +82,7 @@ jobs:
           driver: docker-container
           use: true
 
-      # -------- auth-service --------
+      # -------- auth-service -------
       - name: Build auth-service image
         if: ${{ steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true' }}
         run: |
