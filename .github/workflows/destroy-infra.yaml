@@ -4,16 +4,13 @@
 
 name: Destroy KubeShip Infrastructure on AWS EKS
 
+# Manual trigger only
 on:
   workflow_dispatch:
 
 concurrency:
   group: destroy-infra-${{ github.ref }}
-  cancel-in-progress: false
-
-env:
-  REGION:          ${{ secrets.AWS_REGION }}
-  TF_PROJECT_NAME: ${{ secrets.TF_PROJECT_NAME }}
+  cancel-in-progress: true
 
 jobs:
   destroy:
@@ -30,12 +27,6 @@ jobs:
       TF_EKS_CLUSTER_NAME:         ${{ secrets.TF_EKS_CLUSTER_NAME }}
       TF_STATE_BUCKET:             ${{ secrets.TF_STATE_BUCKET }}
       TF_LOCK_TABLE:               ${{ secrets.TF_LOCK_TABLE }}
-      TF_GITOPS_REPO_URL:          ${{ secrets.TF_GITOPS_REPO_URL }}
-      TF_TARGET_REVISION:          ${{ secrets.TF_TARGET_REVISION }}
-      TF_ARGOCD_APP_MANIFEST_PATH: ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
-      TF_AVAILABILITY_ZONE_1:      ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
-      TF_AVAILABILITY_ZONE_2:      ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
-      TF_VPC_CIDR_BLOCK:           "0.0.0.0/16"  # Adjust as needed
 
     steps:
       - name: Checkout repository
@@ -47,11 +38,6 @@ jobs:
           aws-region:            ${{ env.AWS_REGION }}
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Fetch AWS caller ARN
-        run: |
-          arn=$(aws sts get-caller-identity --query Arn --output text)
-          echo "TF_VAR_terraform_caller_arn=$arn" >> $GITHUB_ENV
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -66,26 +52,19 @@ jobs:
             -backend-config="region=${AWS_REGION}" \
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
-      - name: Terraform Destroy
+      - name: Terraform Destroy Plan
         run: |
-          terraform destroy \
-            -auto-approve \
-            -target=module.argocd_bootstrap \
-            -target=module.ecr \
-            -target=module.cloudwatch \
-            -target=module.waf \
-            -target=module.alb \
-            -target=module.eks \
-            -target=module.secrets \
-            -target=module.vpc \
+          terraform plan \
+            -destroy \
+            -lock-timeout=2m \
             -var="project_name=${TF_PROJECT_NAME}" \
             -var="environment=${TF_ENVIRONMENT}" \
-            -var="vpc_cidr_block=${TF_VPC_CIDR_BLOCK}" \
-            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]" \
             -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
-            -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
-            -var="target_revision=${TF_TARGET_REVISION}" \
-            -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}" \
-            -var="auth_image_digest=" \
-            -var="frontend_image_digest=" \
-            -var="nginx_image_digest="
+            -out tfdestroy.plan
+
+      - name: Terraform Destroy Apply
+        run: terraform apply -auto-approve tfdestroy.plan
+
+      - name: Success notification
+        if: ${{ success() }}
+        run: echo "Infrastructure destroyed successfully."

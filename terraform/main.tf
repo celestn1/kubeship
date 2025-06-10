@@ -78,6 +78,9 @@ module "aws_auth" {
   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
   version = "20.36.0"
 
+  # ensure the ConfigMap exists before patching
+  create                    = true
+  manage_aws_auth_configmap = true
   
   aws_auth_roles = [
     {
