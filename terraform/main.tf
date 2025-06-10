@@ -7,14 +7,15 @@ provider "aws" {
 # Fetch EKS endpoint & auth info
 data "aws_eks_cluster" "this" {
   name       = module.eks.cluster_name
-  depends_on = [ module.eks ]
-}
-data "aws_eks_cluster_auth" "this" {
-  name       = module.eks.cluster_name
-  depends_on = [ module.eks ]
+  depends_on = [module.eks]
 }
 
-# Talk to the real EKS API, not localhost
+data "aws_eks_cluster_auth" "this" {
+  name       = module.eks.cluster_name
+  depends_on = [module.eks]
+}
+
+# Kubernetes provider configuration
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.this.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
@@ -25,14 +26,19 @@ provider "kubernetes" {
 variable "auth_image_digest" {
   description = "sha256 digest for the auth-service image"
   type        = string
+  default     = ""
 }
+
 variable "frontend_image_digest" {
   description = "sha256 digest for the frontend image"
   type        = string
+  default     = ""
 }
+
 variable "nginx_image_digest" {
   description = "sha256 digest for the nginx-gateway image"
   type        = string
+  default     = ""
 }
 
 # VPC
@@ -58,25 +64,23 @@ module "eks" {
   source             = "./modules/eks"
   project_name       = var.project_name
   environment        = var.environment
-
   cluster_name       = var.eks_cluster_name
   cluster_version    = var.eks_cluster_version
   vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
-
   cluster_endpoint_public_access       = true
   cluster_endpoint_private_access      = false
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 }
 
-# AWS-Auth bootstrap submodule
+# AWS-Auth bootstrap submodule - Updated
 module "aws_auth" {
   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
   version = "20.36.0"
 
-  cluster_name = module.eks.cluster_name
+  eks_cluster_id = module.eks.cluster_name
 
-  map_roles = [
+  aws_auth_roles = [
     {
       rolearn  = var.terraform_caller_arn
       username = "terraform-admin"
@@ -103,12 +107,12 @@ module "cloudwatch" {
 
 # WAF — dynamically receive ALB ARN
 module "waf" {
-  source        = "./modules/waf"
-  name          = "kubeship-waf"
-  description   = "WAF for kubeship ingress"
-  project_name  = var.project_name
-  environment   = var.environment
-  alb_arn       = module.alb.alb_arn
+  source       = "./modules/waf"
+  name         = "kubeship-waf"
+  description  = "WAF for kubeship ingress"
+  project_name = var.project_name
+  environment  = var.environment
+  alb_arn      = module.alb.alb_arn
 }
 
 # Secrets Manager
