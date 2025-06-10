@@ -197,9 +197,8 @@ jobs:
         run: |
           terraform apply \
             -auto-approve \
-            -target=module.eks.cluster \
-            -target=module.eks.eks_managed_node_group \
-            -target=module.eks.eks_addons \
+            -target=module.eks \
+            -target=module.aws_auth \
             tfplan.out
 
       - name: Configure kubectl for EKS
