@@ -35,7 +35,7 @@ jobs:
       TF_ARGOCD_APP_MANIFEST_PATH: ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
       TF_AVAILABILITY_ZONE_1:      ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
       TF_AVAILABILITY_ZONE_2:      ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
-      TF_VPC_CIDR_BLOCK:           "0.0.0.0/0"
+      TF_VPC_CIDR_BLOCK:           "0.0.0.0/16"  # Adjust as needed
 
     steps:
       - name: Checkout repository
