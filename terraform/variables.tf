@@ -1,5 +1,7 @@
 // kubeship/terraform/variables.tf
 
+// kubeship/terraform/variables.tf
+
 variable "aws_region" {
   description = "AWS region"
   type        = string
@@ -12,61 +14,73 @@ variable "project_name" {
 }
 
 variable "environment" {
-  description = "Deployment environment"
+  description = "Deployment environment (e.g. dev, staging, prod)"
   type        = string
 }
 
 variable "vpc_cidr_block" {
-  description = "The CIDR block for the VPC"
+  description = "CIDR block for the VPC"
   type        = string
   default     = "10.0.0.0/16"
 }
 
 variable "availability_zones" {
-  description = "List of availability zones to deploy resources"
+  description = "List of AZs to deploy resources into"
   type        = list(string)
   default     = ["eu-west-2a", "eu-west-2b"]
 }
 
 variable "eks_cluster_name" {
-  description = "EKS cluster name"
+  description = "Name of the EKS cluster"
   type        = string
 }
 
 variable "eks_cluster_version" {
-  description = "EKS Kubernetes version"
+  description = "Kubernetes version for EKS"
   type        = string
   default     = "1.32"
 }
 
 variable "gitops_repo_url" {
-  description = "URL of the GitOps repo for ArgoCD"
+  description = "Git repository URL for ArgoCD manifests"
   type        = string
 }
 
-variable "secrets_map" {
-  description = "Map of secrets to store in AWS Secrets Manager"
-  type        = map(string)
-  default     = {}
-}
-
 variable "target_revision" {
-  description = "Git revision to deploy with ArgoCD (e.g., main, HEAD)"
+  description = "Git revision (branch/tag) for ArgoCD to track"
   type        = string
 }
 
 variable "argocd_app_manifest_path" {
-  description = "Path in the GitOps repo where ArgoCD app manifests are located"
+  description = "Path in the repo where ArgoCD Application YAMLs live"
   type        = string
 }
 
 variable "terraform_caller_arn" {
-  description = "The IAM role or user ARN that runs Terraform (needs cluster-admin access)"
+  description = "IAM role ARN used by Terraform (needs cluster-admin on EKS)"
   type        = string
 }
 
-variable "enable_eks_auth_management" {
-  description = "Flag to enable or disable aws-auth ConfigMap management"
-  type        = bool
-  default     = false
+variable "secrets_map" {
+  description = "Map of secret names to values for AWS Secrets Manager"
+  type        = map(string)
+  default     = {}
+}
+
+variable "auth_image_digest" {
+  description = "SHA256 digest for the auth-service Docker image"
+  type        = string
+  default     = ""
+}
+
+variable "frontend_image_digest" {
+  description = "SHA256 digest for the frontend Docker image"
+  type        = string
+  default     = ""
+}
+
+variable "nginx_image_digest" {
+  description = "SHA256 digest for the nginx-gateway Docker image"
+  type        = string
+  default     = ""
 }

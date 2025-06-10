@@ -1,5 +1,15 @@
 // kubeship/terraform/main.tf
 
+terraform {
+  required_version = ">= 1.3.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.35"
+    }
+  }
+}
+
 provider "aws" {
   region = var.aws_region
 }
@@ -22,25 +32,6 @@ provider "kubernetes" {
   token                  = data.aws_eks_cluster_auth.this.token
 }
 
-# Image digest variables
-variable "auth_image_digest" {
-  description = "sha256 digest for the auth-service image"
-  type        = string
-  default     = ""
-}
-
-variable "frontend_image_digest" {
-  description = "sha256 digest for the frontend image"
-  type        = string
-  default     = ""
-}
-
-variable "nginx_image_digest" {
-  description = "sha256 digest for the nginx-gateway image"
-  type        = string
-  default     = ""
-}
-
 # VPC
 module "vpc" {
   source             = "./modules/vpc"
@@ -59,39 +50,40 @@ module "alb" {
   public_subnet_ids = module.vpc.public_subnet_ids
 }
 
-# EKS cluster provisioning (wrapper module)
+# EKS cluster provisioning (registry module)
 module "eks" {
-  source             = "./modules/eks"
-  project_name       = var.project_name
-  environment        = var.environment
-  cluster_name       = var.eks_cluster_name
-  cluster_version    = var.eks_cluster_version
-  vpc_id             = module.vpc.vpc_id
-  private_subnet_ids = module.vpc.private_subnet_ids
-  cluster_endpoint_public_access       = true
-  cluster_endpoint_private_access      = false
+  source  = "terraform-aws-modules/eks/aws"
+  version = ">= 20.37.0"
+
+  # Core cluster settings
+  cluster_name                    = var.eks_cluster_name
+  cluster_version                 = var.eks_cluster_version
+  vpc_id                          = module.vpc.vpc_id
+  subnet_ids                      = module.vpc.private_subnet_ids
+  enable_irsa                     = true
+  cluster_enabled_log_types       = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  cluster_endpoint_public_access  = true
+  cluster_endpoint_private_access = false
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
-  enable_eks_auth_management          = false # Explicitly disable aws-auth management in EKS module
-}
 
-# AWS-Auth bootstrap submodule - deleted the cluster name from the module call
-module "aws_auth" {
-  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
-  version = "20.36.0"
-
-  # ensure the ConfigMap exists before patching
-  create                    = true
-  manage_aws_auth_configmap = true
-  
-  aws_auth_roles = [
-    {
-      rolearn  = var.terraform_caller_arn
-      username = "terraform-admin"
-      groups   = ["system:masters"]
+  # Use the EKS Access Entry API (no more aws-auth blocks)
+  authentication_mode = "API_AND_CONFIG_MAP"
+  access_entries = {
+    terraform_admin = {
+      principal_arn = var.terraform_caller_arn
+      policy_associations = {
+        cluster_admin = {
+          policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = { type = "cluster" }
+        }
+      }
     }
-  ]
+  }
 
-  depends_on = [module.eks]
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+  }
 }
 
 # ECR
@@ -110,7 +102,7 @@ module "cloudwatch" {
   cluster_name = var.eks_cluster_name
 }
 
-# WAF — dynamically receive ALB ARN
+# WAF
 module "waf" {
   source       = "./modules/waf"
   name         = "kubeship-waf"
