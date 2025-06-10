@@ -1,5 +1,5 @@
 // kubeship/shared/validators.ts
-// Added to test docker image push 1
+// Added to test docker image push 3
 export const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
 export const isValidUsername = (username: string): boolean => {

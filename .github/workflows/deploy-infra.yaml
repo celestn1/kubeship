@@ -86,10 +86,7 @@ jobs:
       - name: Build auth-service image
         if: ${{ steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true' }}
         run: |
-          docker build \
-            -t $ECR_REPO_1:$IMAGE_TAG \
-            -f microservices/auth-service
-            microservices/auth-service
+          docker build -t $ECR_REPO_1:$IMAGE_TAG -f ./microservices/auth-service/Dockerfile ./microservices/auth-service
 
       - name: Tag, Push auth-service image to ECR
         id: auth-digest
@@ -105,10 +102,7 @@ jobs:
       - name: Build frontend image
         if: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true' }}
         run: |
-          docker build \
-            -t $ECR_REPO_2:$IMAGE_TAG \
-            -f microservices/frontend
-            .
+          docker build -t $ECR_REPO_2:$IMAGE_TAG -f ./microservices/frontend/Dockerfile .
 
       - name: Tag, Push frontend image to ECR
         id: frontend-digest
@@ -124,10 +118,8 @@ jobs:
       - name: Build nginx-gateway image
         if: ${{ steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs.shared == 'true' }}
         run: |
-          docker build \
-            -t $ECR_REPO_3:$IMAGE_TAG \
-            -f nginx/Dockerfile \
-            nginx
+          docker build -t $ECR_REPO_3:$IMAGE_TAG -f ./nginx/Dockerfile ./nginx
+
 
       - name: Tag, Push nginx-gateway image to ECR
         id: nginx-digest
