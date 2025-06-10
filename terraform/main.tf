@@ -73,7 +73,7 @@ module "eks" {
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 }
 
-# AWS-Auth bootstrap submodule - Updated
+# AWS-Auth bootstrap submodule - deleted the cluster name from the module call
 module "aws_auth" {
   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
   version = "20.36.0"
