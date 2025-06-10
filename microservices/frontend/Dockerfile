@@ -1,4 +1,5 @@
 # kubeship/microservices/frontend/Dockerfile
+# Adding just to trigger docker image push
 FROM node:20-alpine
 
 WORKDIR /app
@@ -7,7 +8,7 @@ WORKDIR /app
 COPY microservices/frontend/package*.json ./
 RUN npm ci
 
-# 2) Bring in your shared code
+# 2) Bring in your shared code from shared directory
 COPY shared/ ./shared
 
 # 3) Copy the rest of the frontend

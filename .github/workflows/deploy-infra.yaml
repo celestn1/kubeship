@@ -11,6 +11,9 @@ on:
     paths:
       - terraform/**
       - .github/workflows/deploy-infra.yaml
+      - microservices/**
+      - nginx/**
+      - shared/**      
 
 concurrency:
   group: deploy-infra-${{ github.ref }}

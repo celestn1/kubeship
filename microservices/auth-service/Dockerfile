@@ -1,4 +1,5 @@
 # kubeship/microservices/auth-service/Dockerfile
+# Adding just to trigger docker image push
 FROM python:3.10-slim
 
 WORKDIR /app
