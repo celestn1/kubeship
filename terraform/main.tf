@@ -78,8 +78,7 @@ module "aws_auth" {
   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
   version = "20.36.0"
 
-  eks_cluster_id = module.eks.cluster_name
-
+  
   aws_auth_roles = [
     {
       rolearn  = var.terraform_caller_arn
@@ -87,6 +86,8 @@ module "aws_auth" {
       groups   = ["system:masters"]
     }
   ]
+
+  depends_on = [module.eks]
 }
 
 # ECR
