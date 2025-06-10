@@ -108,7 +108,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file:    microservices/frontend/Dockerfile
+          file:   ./microservices/frontend/Dockerfile
           push:    true
           tags: |
             ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-frontend:latest
