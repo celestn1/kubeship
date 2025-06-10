@@ -38,6 +38,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Detect file changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            auth-service:
+              - 'microservices/auth-service/**'
+            frontend:
+              - 'microservices/frontend/**'
+            nginx-gateway:
+              - 'nginx/**'
+            shared:
+              - 'shared/**'      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
