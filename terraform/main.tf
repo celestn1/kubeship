@@ -71,6 +71,7 @@ module "eks" {
   cluster_endpoint_public_access       = true
   cluster_endpoint_private_access      = false
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
+  enable_eks_auth_management          = false # Explicitly disable aws-auth management in EKS module
 }
 
 # AWS-Auth bootstrap submodule - deleted the cluster name from the module call

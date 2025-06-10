@@ -50,3 +50,8 @@ variable "environment" {
   type        = string
 }
 
+variable "enable_eks_auth_management" {
+  description = "Enable aws-auth ConfigMap management by Terraform"
+  type        = bool
+  default     = false
+}

@@ -193,13 +193,22 @@ jobs:
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
             -out=tfplan.out
 
-      - name: Terraform Apply EKS module only (strict)
+      - name: Terraform Apply Phase 1 (EKS Only, No aws-auth)
         run: |
           terraform apply \
             -auto-approve \
             -target=module.eks \
-            -target=module.aws_auth \
-            tfplan.out
+            -var="enable_eks_auth_management=false" \
+            -var="project_name=${TF_PROJECT_NAME}" \
+            -var="environment=${TF_ENVIRONMENT}" \
+            -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
+            -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
+            -var="target_revision=${TF_TARGET_REVISION}" \
+            -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}" \
+            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]" \
+            -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-service-digest }}" \
+            -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
+            -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
 
       - name: Configure kubectl for EKS
         run: |
@@ -207,20 +216,17 @@ jobs:
             --name ${{ env.TF_EKS_CLUSTER_NAME }} \
             --region ${{ env.AWS_REGION }}
 
-      - name: Patch aws-auth ConfigMap
+      - name: Patch aws-auth ConfigMap to grant Terraform access
         run: |
-          aws eks update-kubeconfig \
-            --name ${{ env.TF_EKS_CLUSTER_NAME }} \
-            --region ${{ env.AWS_REGION }}
-
           kubectl -n kube-system patch configmap aws-auth \
             --type merge \
             --patch '{"data":{"mapRoles":"- rolearn: '"${TF_VAR_terraform_caller_arn}"'\n    username: terraform-admin\n    groups:\n      - system:masters\n"}}'
 
-      - name: Re-run Terraform Plan (post aws-auth patch)
+      - name: Terraform Plan Phase 2 (All Modules + aws-auth management)
         run: |
           terraform plan \
             -lock-timeout=2m \
+            -var="enable_eks_auth_management=true" \
             -var="project_name=${TF_PROJECT_NAME}" \
             -var="environment=${TF_ENVIRONMENT}" \
             -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
@@ -231,10 +237,10 @@ jobs:
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-service-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
-            -out=tfplan-after-auth.out
+            -out=tfplan-final.out
 
-      - name: Terraform Apply (Remaining Resources)
+      - name: Terraform Apply Phase 2 (Final Apply with aws-auth)
         run: |
           terraform apply \
             -auto-approve \
-            tfplan-after-auth.out
+            tfplan-final.out
