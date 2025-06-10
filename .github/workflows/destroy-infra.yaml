@@ -1,13 +1,22 @@
 # ------------------------------
 # .github/workflows/destroy-infra.yaml
 # ------------------------------
+
 name: Destroy KubeShip Infrastructure on AWS EKS
 
 on:
   workflow_dispatch:
 
+concurrency:
+  group: destroy-infra-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGION:          ${{ secrets.AWS_REGION }}
+  TF_PROJECT_NAME: ${{ secrets.TF_PROJECT_NAME }}
+
 jobs:
-  terraform-destroy:
+  destroy:
     name: Terraform Destroy
     runs-on: ubuntu-latest
     defaults:
@@ -15,29 +24,34 @@ jobs:
         working-directory: terraform
 
     env:
-      AWS_REGION:                              ${{ secrets.AWS_REGION }}
-      TF_PROJECT_NAME:                         ${{ secrets.TF_PROJECT_NAME }}
-      TF_ENVIRONMENT:                          ${{ secrets.TF_ENVIRONMENT }}
-      TF_EKS_CLUSTER_NAME:                     ${{ secrets.TF_EKS_CLUSTER_NAME }}
-      TF_EKS_CLUSTER_VERSION:                  ${{ secrets.TF_EKS_CLUSTER_VERSION }}
-      TF_GITOPS_REPO_URL:                      ${{ secrets.TF_GITOPS_REPO_URL }}
-      TF_TARGET_REVISION:                      ${{ secrets.TF_TARGET_REVISION }}
-      TF_ARGOCD_APP_MANIFEST_PATH:             ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
-      TF_AVAILABILITY_ZONE_1:                  ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
-      TF_AVAILABILITY_ZONE_2:                  ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
-      TF_STATE_BUCKET:                         ${{ secrets.TF_STATE_BUCKET }}
-      TF_LOCK_TABLE:                           ${{ secrets.TF_LOCK_TABLE }}
+      AWS_REGION:                  ${{ secrets.AWS_REGION }}
+      TF_PROJECT_NAME:             ${{ secrets.TF_PROJECT_NAME }}
+      TF_ENVIRONMENT:              ${{ secrets.TF_ENVIRONMENT }}
+      TF_EKS_CLUSTER_NAME:         ${{ secrets.TF_EKS_CLUSTER_NAME }}
+      TF_STATE_BUCKET:             ${{ secrets.TF_STATE_BUCKET }}
+      TF_LOCK_TABLE:               ${{ secrets.TF_LOCK_TABLE }}
+      TF_GITOPS_REPO_URL:          ${{ secrets.TF_GITOPS_REPO_URL }}
+      TF_TARGET_REVISION:          ${{ secrets.TF_TARGET_REVISION }}
+      TF_ARGOCD_APP_MANIFEST_PATH: ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
+      TF_AVAILABILITY_ZONE_1:      ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
+      TF_AVAILABILITY_ZONE_2:      ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
+      TF_VPC_CIDR_BLOCK:           "0.0.0.0/0"
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
+          aws-region:            ${{ env.AWS_REGION }}
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Fetch AWS caller ARN
+        run: |
+          arn=$(aws sts get-caller-identity --query Arn --output text)
+          echo "TF_VAR_terraform_caller_arn=$arn" >> $GITHUB_ENV
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -51,28 +65,27 @@ jobs:
             -backend-config="key=infra/terraform.tfstate" \
             -backend-config="region=${AWS_REGION}" \
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
-      - name: Generate secrets.auto.tfvars.json
+
+      - name: Terraform Destroy
         run: |
-          cat > secrets.auto.tfvars.json <<EOF
-          {
-            "secrets_map": {
-              "JWT_SECRET_KEY": "${{ secrets.JWT_SECRET_KEY }}",
-              "JWT_ALGORITHM": "${{ secrets.JWT_ALGORITHM }}",
-              "DATABASE_URL": "${{ secrets.DATABASE_URL }}",
-              "REDIS_URL": "${{ secrets.REDIS_URL }}"
-            }
-          }
-          EOF
-      - name: 🔥 Terraform Destroy
-        run: |
-          terraform destroy -auto-approve \
-            -var-file="secrets.auto.tfvars.json" \
+          terraform destroy \
+            -auto-approve \
+            -target=module.argocd_bootstrap \
+            -target=module.ecr \
+            -target=module.cloudwatch \
+            -target=module.waf \
+            -target=module.alb \
+            -target=module.eks \
+            -target=module.secrets \
+            -target=module.vpc \
             -var="project_name=${TF_PROJECT_NAME}" \
             -var="environment=${TF_ENVIRONMENT}" \
-            -var="aws_region=${AWS_REGION}" \
+            -var="vpc_cidr_block=${TF_VPC_CIDR_BLOCK}" \
+            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]" \
             -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
-            -var="eks_cluster_version=${TF_EKS_CLUSTER_VERSION}" \
             -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
             -var="target_revision=${TF_TARGET_REVISION}" \
             -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}" \
-            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\", \"${TF_AVAILABILITY_ZONE_2}\"]"
+            -var="auth_image_digest=" \
+            -var="frontend_image_digest=" \
+            -var="nginx_image_digest="
