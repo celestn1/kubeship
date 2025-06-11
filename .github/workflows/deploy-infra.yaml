@@ -101,7 +101,7 @@ jobs:
       # Frontend
       - name: Build frontend
         if: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true' }}
-        run: docker build -t frontend:latest -f ./microservices/frontend/Dockerfile ./microservices/frontend
+        run: docker build -t frontend:latest -f ./microservices/frontend/Dockerfile .
 
       - name: Push frontend
         id: frontend-digest
