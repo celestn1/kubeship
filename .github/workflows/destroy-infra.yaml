@@ -1,16 +1,29 @@
-# ------------------------------
 # .github/workflows/destroy-infra.yaml
-# ------------------------------
 
 name: Destroy KubeShip Infrastructure on AWS EKS
 
-# Manual trigger only
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # manual trigger
 
 concurrency:
   group: destroy-infra-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  id-token: write     # for OIDC
+  contents: read
+
+env:
+  REGION:                        ${{ secrets.AWS_REGION }}
+  TF_STATE_BUCKET:               ${{ secrets.TF_STATE_BUCKET }}
+  TF_LOCK_TABLE:                 ${{ secrets.TF_LOCK_TABLE }}
+  TF_VAR_project_name:           ${{ secrets.TF_PROJECT_NAME }}
+  TF_VAR_environment:            ${{ secrets.TF_ENVIRONMENT }}
+  TF_VAR_eks_cluster_name:       ${{ secrets.TF_EKS_CLUSTER_NAME }}
+  TF_VAR_gitops_repo_url:        ${{ secrets.TF_GITOPS_REPO_URL }}
+  TF_VAR_target_revision:        ${{ secrets.TF_TARGET_REVISION }}
+  TF_VAR_argocd_app_manifest_path: ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
+  TF_VAR_terraform_caller_arn:   ${{ secrets.CI_IAM_ROLE_ARN }}
 
 jobs:
   destroy:
@@ -20,66 +33,28 @@ jobs:
       run:
         working-directory: terraform
 
-    env:
-      AWS_REGION:                   ${{ secrets.AWS_REGION }}
-      TF_PROJECT_NAME:              ${{ secrets.TF_PROJECT_NAME }}
-      TF_ENVIRONMENT:               ${{ secrets.TF_ENVIRONMENT }}
-      TF_EKS_CLUSTER_NAME:          ${{ secrets.TF_EKS_CLUSTER_NAME }}
-      TF_STATE_BUCKET:              ${{ secrets.TF_STATE_BUCKET }}
-      TF_LOCK_TABLE:                ${{ secrets.TF_LOCK_TABLE }}
-      TF_GITOPS_REPO_URL:           ${{ secrets.TF_GITOPS_REPO_URL }}
-      TF_TARGET_REVISION:           ${{ secrets.TF_TARGET_REVISION }}
-      TF_ARGOCD_APP_MANIFEST_PATH:  ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
-      TF_AVAILABILITY_ZONE_1:       ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
-      TF_AVAILABILITY_ZONE_2:       ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
-
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
+      - name: Authenticate to AWS via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-region:            ${{ env.AWS_REGION }}
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume:    ${{ secrets.CI_IAM_ROLE_ARN }}
+          aws-region:        ${{ env.REGION }}
+          role-session-name: github-actions-eks-destroy
 
-      - name: Fetch AWS caller ARN
-        id: caller
-        run: |
-          arn=$(aws sts get-caller-identity --query Arn --output text)
-          echo "TF_VAR_terraform_caller_arn=$arn" >> $GITHUB_ENV       
-                    
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.6
 
       - name: Terraform Init
-        run: |
-          terraform init \
-            -backend-config="bucket=${TF_STATE_BUCKET}" \
-            -backend-config="key=infra/terraform.tfstate" \
-            -backend-config="region=${AWS_REGION}" \
-            -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
+        run: terraform init -upgrade \
+          -backend-config="bucket=${TF_STATE_BUCKET}" \
+          -backend-config="key=infra/terraform.tfstate" \
+          -backend-config="region=${REGION}" \
+          -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
-      - name: Terraform Destroy Plan
-        run: |
-          terraform plan \
-            -destroy \
-            -lock-timeout=2m \
-            -var="project_name=${TF_PROJECT_NAME}" \
-            -var="environment=${TF_ENVIRONMENT}" \
-            -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
-            -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
-            -var="target_revision=${TF_TARGET_REVISION}" \
-            -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}" \
-            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]" \
-            -out tfdestroy.plan
-
-      - name: Terraform Destroy Apply
-        run: terraform apply -auto-approve tfdestroy.plan
-
-      - name: Success notification
-        if: ${{ success() }}
-        run: echo "Infrastructure destroyed successfully."
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
