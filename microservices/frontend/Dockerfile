@@ -1,5 +1,5 @@
 # kubeship/microservices/frontend/Dockerfile
-# Added to test docker image push 4
+# Added to test docker image push 5
 FROM node:20-alpine
 
 WORKDIR /app

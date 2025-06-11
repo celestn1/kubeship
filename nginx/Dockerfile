@@ -1,5 +1,5 @@
 # kubeship/nginx/Dockerfile
-# Added to test docker image push 4
+# Added to test docker image push 5
 
 # nginx Dockerfile
 FROM nginx:1.25-alpine

@@ -20,10 +20,15 @@ permissions:
   contents: read  
 
 env:
-  REGION:                       ${{ secrets.AWS_REGION }}
+  IMAGE_TAG:       latest
+  ECR_REPO_1:      auth-service
+  ECR_REPO_2:      frontend
+  ECR_REPO_3:      nginx-gateway
+  REGION:          ${{ secrets.AWS_REGION }}
+  ACCOUNT_ID:      ${{ secrets.AWS_ACCOUNT_ID }}
+  TF_PROJECT_NAME: ${{ secrets.TF_PROJECT_NAME }}   
   TF_STATE_BUCKET:              ${{ secrets.TF_STATE_BUCKET }}
   TF_LOCK_TABLE:                ${{ secrets.TF_LOCK_TABLE }}
-  TF_PROJECT_NAME:              ${{ secrets.TF_PROJECT_NAME }}
   TF_ENVIRONMENT:               ${{ secrets.TF_ENVIRONMENT }}
   TF_EKS_CLUSTER_NAME:          ${{ secrets.TF_EKS_CLUSTER_NAME }}
   TF_GITOPS_REPO_URL:           ${{ secrets.TF_GITOPS_REPO_URL }}
@@ -84,47 +89,54 @@ jobs:
           driver: docker-container
           use: true
 
-      # Auth service
-      - name: Build auth-service
+      # -------- auth-service --------
+      - name: Build auth-service image
         if: ${{ steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true' }}
-        run: docker build -t auth-service:latest -f ./microservices/auth-service/Dockerfile ./microservices/auth-service
+        run: |
+          docker build -t $ECR_REPO_1:$IMAGE_TAG -f ./microservices/auth-service/Dockerfile ./microservices/auth-service
 
-      - name: Push auth-service
+      - name: Tag, Push auth-service image to ECR
         id: auth-digest
         if: ${{ steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true' }}
         run: |
-          URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-auth-service
-          docker tag auth-service:latest $URI:latest
-          docker push $URI:latest
-          echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' $URI:latest)" >> $GITHUB_OUTPUT
+          IMAGE_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-$ECR_REPO_1
+          docker tag $ECR_REPO_1:$IMAGE_TAG $IMAGE_URI:$IMAGE_TAG
+          docker push $IMAGE_URI:$IMAGE_TAG
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_URI:$IMAGE_TAG)
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
-      # Frontend
-      - name: Build frontend
+      # -------- frontend --------
+      - name: Build frontend image
         if: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true' }}
-        run: docker build -t frontend:latest -f ./microservices/frontend/Dockerfile .
+        run: |
+          docker build -t $ECR_REPO_2:$IMAGE_TAG -f ./microservices/frontend/Dockerfile .
 
-      - name: Push frontend
+      - name: Tag, Push frontend image to ECR
         id: frontend-digest
         if: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true' }}
         run: |
-          URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-frontend
-          docker tag frontend:latest $URI:latest
-          docker push $URI:latest
-          echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' $URI:latest)" >> $GITHUB_OUTPUT
+          IMAGE_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-$ECR_REPO_2
+          docker tag $ECR_REPO_2:$IMAGE_TAG $IMAGE_URI:$IMAGE_TAG
+          docker push $IMAGE_URI:$IMAGE_TAG
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_URI:$IMAGE_TAG)
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
-      # NGINX Gateway
-      - name: Build nginx-gateway
+      # -------- nginx-gateway --------
+      - name: Build nginx-gateway image
         if: ${{ steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs.shared == 'true' }}
-        run: docker build -t nginx-gateway:latest -f ./nginx/Dockerfile ./nginx
+        run: |
+          docker build -t $ECR_REPO_3:$IMAGE_TAG -f ./nginx/Dockerfile ./nginx
 
-      - name: Push nginx-gateway
+
+      - name: Tag, Push nginx-gateway image to ECR
         id: nginx-digest
         if: ${{ steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs.shared == 'true' }}
         run: |
-          URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-nginx-gateway
-          docker tag nginx-gateway:latest $URI:latest
-          docker push $URI:latest
-          echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' $URI:latest)" >> $GITHUB_OUTPUT
+          IMAGE_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-$ECR_REPO_3
+          docker tag $ECR_REPO_3:$IMAGE_TAG $IMAGE_URI:$IMAGE_TAG
+          docker push $IMAGE_URI:$IMAGE_TAG
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_URI:$IMAGE_TAG)
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
   deploy:
     name: Provision & Bootstrap EKS
