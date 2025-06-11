@@ -1,5 +1,5 @@
 # kubeship/microservices/auth-service/Dockerfile
-# Added to test docker image push 3
+# Added to test docker image push 4
 FROM python:3.10-slim
 
 WORKDIR /app

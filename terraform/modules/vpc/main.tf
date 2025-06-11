@@ -46,6 +46,7 @@ resource "aws_subnet" "private" {
 # Internet Gateway (public)
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
+  depends_on = [ aws_nat_gateway.this ]
 
   tags = {
     Name    = "${var.project_name}-igw"
@@ -55,7 +56,12 @@ resource "aws_internet_gateway" "igw" {
 
 # Elastic IP for NAT
 resource "aws_eip" "nat" {
-  depends_on = [ aws_internet_gateway.igw ]
+  domain = "vpc"
+  
+  tags = {
+    Name    = "${var.project_name}-nat-eip"
+    Project = var.project_name
+  }
 }
 
 # NAT Gateway for private subnets
