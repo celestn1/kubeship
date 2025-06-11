@@ -184,7 +184,7 @@ jobs:
 
       - name: Install ArgoCD CRDs
         run: |
-          kubectl apply -k "https://github.com/argoproj/argo-cd/manifests/crds?ref=v5.51.6"
+          kubectl apply -k "https://github.com/argoproj/argo-cd/manifests/crds?ref=v2.9.3"
 
       - name: Terraform Plan & Apply (full sync)
         run: |
