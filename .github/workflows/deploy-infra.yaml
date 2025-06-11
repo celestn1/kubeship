@@ -172,10 +172,23 @@ jobs:
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
             -var="terraform_caller_arn=${{ secrets.CI_IAM_ROLE_ARN }}"  
 
+      # ─── Phase 1: Create the EKS cluster only ─────────────────────
+      - name: Terraform Apply (cluster only)
+        run: terraform apply -auto-approve -target=module.eks tfplan
+
+      # ─── Configure kubectl so we can talk to the new cluster ─────
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ env.TF_EKS_CLUSTER_NAME }} \
+            --region ${{ env.REGION }}
+
+      # ─── Install ArgoCD CRDs by hand ─────────────────────────────
       - name: Install ArgoCD CRDs
         run: |
-          kubectl apply --kubeconfig=$HOME/.kube/config \
+          kubectl apply \
             -f https://raw.githubusercontent.com/argoproj/argo-helm/v5.51.6/crds/crds.yaml
-            
-      - name: Terraform Apply
+
+      # ─── Phase 2: Finish deploying everything else ───────────────
+      - name: Terraform Apply (full sync)
         run: terraform apply -auto-approve tfplan
