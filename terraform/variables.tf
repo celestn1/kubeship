@@ -54,6 +54,7 @@ variable "target_revision" {
 variable "argocd_app_manifest_path" {
   description = "Path in the repo where ArgoCD Application YAMLs live"
   type        = string
+  default     = ""
 }
 
 variable "terraform_caller_arn" {
