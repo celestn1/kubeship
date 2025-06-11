@@ -174,7 +174,7 @@ jobs:
 
 
       - name: Terraform Apply (cluster only)
-        run: terraform apply -auto-approve -target=module.eks
+        run: terraform apply -auto-approve tfplan-cluster
 
       - name: Configure kubectl
         run: |
