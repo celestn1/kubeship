@@ -53,3 +53,7 @@ output "nginx_image_digest" {
   description = "SHA256 digest for the nginx-gateway image"
   value       = var.nginx_image_digest
 }
+
+output "github_actions_role_arn" {
+  value = aws_iam_role.github_actions_deployer.arn
+}

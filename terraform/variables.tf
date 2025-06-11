@@ -84,3 +84,10 @@ variable "nginx_image_digest" {
   type        = string
   default     = ""
 }
+
+variable "github_org" {
+  type = string
+}
+variable "github_repo" {
+  type = string
+}
