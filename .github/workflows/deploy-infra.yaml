@@ -157,9 +157,25 @@ jobs:
             -backend-config="region=${REGION}" \
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
-      - name: Terraform Plan
+      - name: Terraform Plan (cluster only)
+        run: terraform plan -target=module.eks
+
+      - name: Terraform Apply (cluster only)
+        run: terraform apply -auto-approve -target=module.eks
+
+      - name: Configure kubectl
         run: |
-          terraform plan -out=tfplan \
+          aws eks update-kubeconfig \
+            --name "${{ env.TF_EKS_CLUSTER_NAME }}" \
+            --region "${{ env.REGION }}"
+
+      - name: Install ArgoCD CRDs
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-helm/v5.51.6/crds/crds.yaml
+
+      - name: Terraform Plan & Apply (full sync)
+        run: |
+          terraform plan -out=tfplan2 \
             -var="project_name=${TF_PROJECT_NAME}" \
             -var="environment=${TF_ENVIRONMENT}" \
             -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
@@ -171,29 +187,4 @@ jobs:
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
             -var="terraform_caller_arn=${{ secrets.CI_IAM_ROLE_ARN }}"  
-
-      # Phase 1: Stand up the EKS cluster and node group
-      - name: Terraform Apply (Cluster Only)
-        run: |
-          terraform apply \
-            -auto-approve \
-            -target=module.eks
-
-      # Now that the cluster exists, reconfigure kubectl
-      - name: Configure kubectl
-        run: |
-          aws eks update-kubeconfig \
-            --name ${{ env.TF_EKS_CLUSTER_NAME }} \
-            --region ${{ env.REGION }}
-
-      # Install CRDs so Helm skip_crds can work
-      - name: Install ArgoCD CRDs
-        run: |
-          kubectl apply \
-            -f https://raw.githubusercontent.com/argoproj/argo-helm/v5.51.6/crds/crds.yaml
-
-      # Phase 2: Apply everything else against the live cluster
-      - name: Terraform Apply (Full Sync)
-        run: |
-          terraform apply \
-            -auto-approve
+          terraform apply -auto-approve tfplan2
