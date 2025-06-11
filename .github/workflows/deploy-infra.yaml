@@ -170,7 +170,7 @@ jobs:
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
-            -var="terraform_caller_arn=${{ secrets.CI_IAM_ROLE_ARN }}"
+            -var="terraform_caller_arn=${{ secrets.CI_IAM_ROLE_ARN }}"  
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
