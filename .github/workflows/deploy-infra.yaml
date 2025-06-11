@@ -27,7 +27,7 @@ env:
   TF_ARGOCD_APP_MANIFEST_PATH:  ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
   TF_AVAILABILITY_ZONE_1:       ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
   TF_AVAILABILITY_ZONE_2:       ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
-  TF_VAR_terraform_caller_arn:  ${{ secrets.AWS_ACCESS_KEY_ID_ARN }}
+  TF_VAR_terraform_caller_arn:  ${{ secrets.CI_IAM_ROLE_ARN }}
 
 jobs:
   build-and-push:
@@ -136,7 +136,7 @@ jobs:
       - name: Authenticate to AWS via OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume:    ${{ secrets.AWS_ACCESS_KEY_ID_ARN }}
+          role-to-assume:    ${{ secrets.CI_IAM_ROLE_ARN }}
           aws-region:        ${{ env.REGION }}
           role-session-name: github-actions-eks
 
@@ -165,7 +165,7 @@ jobs:
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
-            -var="terraform_caller_arn=${TF_VAR_terraform_caller_arn}"
+            -var="terraform_caller_arn=${{ secrets.CI_IAM_ROLE_ARN }}"
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
