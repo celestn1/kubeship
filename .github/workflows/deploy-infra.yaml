@@ -172,5 +172,10 @@ jobs:
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
             -var="terraform_caller_arn=${{ secrets.CI_IAM_ROLE_ARN }}"  
 
+      - name: Install ArgoCD CRDs
+        run: |
+          kubectl apply --kubeconfig=$HOME/.kube/config \
+            -f https://raw.githubusercontent.com/argoproj/argo-helm/v5.51.6/crds/crds.yaml
+            
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
