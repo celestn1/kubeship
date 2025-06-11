@@ -93,6 +93,18 @@ module "eks" {
     }
   }
 
+  # Bring your own worker nodes
+  eks_managed_node_groups = {
+    default = {
+      desired_size   = 2
+      min_size       = 1
+      max_size       = 3
+      instance_types = ["t3.medium"]
+      # optional: key_name = var.ssh_key_name
+      # optional: disk_size = 20
+    }
+  }  
+
   tags = {
     Environment = var.environment
     Project     = var.project_name
