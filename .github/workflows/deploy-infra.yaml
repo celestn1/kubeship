@@ -174,7 +174,7 @@ jobs:
 
       # ─── Phase 1: Create the EKS cluster only ─────────────────────
       - name: Terraform Apply (cluster only)
-        run: terraform apply -auto-approve -target=module.eks tfplan
+        run: terraform apply -auto-approve -target=module.eks
 
       # ─── Configure kubectl so we can talk to the new cluster ─────
       - name: Configure kubectl
@@ -189,6 +189,20 @@ jobs:
           kubectl apply \
             -f https://raw.githubusercontent.com/argoproj/argo-helm/v5.51.6/crds/crds.yaml
 
-      # ─── Phase 2: Finish deploying everything else ───────────────
-      - name: Terraform Apply (full sync)
-        run: terraform apply -auto-approve tfplan
+      # Phase 2: Refresh plan *and* finish everything else
+      - name: Terraform Plan & Apply (rest)
+        run: |
+          terraform plan -out=tfplan2 \
+            -var="project_name=${TF_PROJECT_NAME}" \
+            -var="environment=${TF_ENVIRONMENT}" \
+            -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
+            -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
+            -var="target_revision=${TF_TARGET_REVISION}" \
+            -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}" \
+            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]" \
+            -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
+            -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
+            -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
+            -var="terraform_caller_arn=${{ secrets.CI_IAM_ROLE_ARN }}"  
+
+          terraform apply -auto-approve tfplan2
