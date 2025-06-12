@@ -1,9 +1,10 @@
 // kubeship/terraform/modules/secrets/outputs.tf
 
 output "secret_arns" {
-  description = "ARNs of the secrets"
+  description = "Map of secret keys to their ARNs"
   value = {
-    for k, v in aws_secretsmanager_secret.this : k => v.arn
+    for key, secret in aws_secretsmanager_secret.secrets :
+    key => secret.arn
   }
 }
 

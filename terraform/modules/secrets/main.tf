@@ -1,9 +1,15 @@
 // kubeship/terraform/modules/secrets/main.tf
 
-resource "aws_secretsmanager_secret" "this" {
+resource "aws_secretsmanager_secret" "secrets" {
   for_each = var.secrets_map
 
-  name = each.key
+  name        = each.key
+  description = "Managed secret ${each.key} for ${var.environment}"
+
+    lifecycle {
+    prevent_destroy = false
+    ignore_changes  = [tags_all]
+  }
 
   tags = {
     Environment = var.environment
@@ -11,9 +17,16 @@ resource "aws_secretsmanager_secret" "this" {
   }
 }
 
-resource "aws_secretsmanager_secret_version" "version" {
-  for_each = var.secrets_map
+resource "aws_secretsmanager_secret_version" "secrets_version" {
+  for_each = aws_secretsmanager_secret.secrets
 
-  secret_id     = aws_secretsmanager_secret.this[each.key].id
-  secret_string = each.value
+  secret_id = each.value.id
+
+  # fallback to a default string if the value is not valid
+  secret_string = try(
+    length(trim(var.secrets_map[each.key], " ")) > 0 ? var.secrets_map[each.key] : "REDACTED",
+    "REDACTED"
+  )
+
+  version_stages = ["AWSCURRENT"]
 }

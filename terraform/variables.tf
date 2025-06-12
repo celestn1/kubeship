@@ -1,7 +1,5 @@
 // kubeship/terraform/variables.tf
 
-// kubeship/terraform/variables.tf
-
 variable "aws_region" {
   description = "AWS region"
   type        = string
@@ -38,7 +36,7 @@ variable "eks_cluster_name" {
 variable "eks_cluster_version" {
   description = "Kubernetes version for EKS"
   type        = string
-  default     = "1.32"
+  default     = "1.26"
 }
 
 variable "gitops_repo_url" {

@@ -96,7 +96,7 @@ module "eks" {
   # Bring your own worker nodes
   eks_managed_node_groups = {
     default = {
-      desired_size   = 2
+      desired_size   = 1
       min_size       = 1
       max_size       = 3
       instance_types = ["t3.medium"]
@@ -153,4 +153,19 @@ module "argocd_bootstrap" {
   repository_url           = var.gitops_repo_url
   target_revision          = var.target_revision
   argocd_app_manifest_path = var.argocd_app_manifest_path
+}
+
+# External Secrets Operator
+module "external_secrets" {
+  source     = "./modules/external-secrets"
+  aws_region = var.aws_region
+  namespace  = "default"
+  secrets_map = {}
+}
+
+module "external_secrets_resources" {
+  source      = "./modules/external-secrets"
+  aws_region  = var.aws_region  
+  secrets_map = var.secrets_map
+  namespace   = "default"
 }

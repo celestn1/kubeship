@@ -18,4 +18,4 @@ persistence:
   enabled: true
   accessMode: ReadWriteOnce
   size: 5Gi
-  storageClass: gp2
+  storageClass: gp3

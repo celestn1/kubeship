@@ -1,0 +1,18 @@
+# kubeship/helm-charts/frontend/values.yaml
+
+replicaCount: 1
+
+image:
+  repository: ""
+  tag:        "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+
+env: [
+  VITE_API_URL=/v1/auth
+]
+

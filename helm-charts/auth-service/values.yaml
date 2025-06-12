@@ -1,7 +1,9 @@
+# kubeship/helm-charts/auth-service/values.yaml
+
 replicaCount: 1
 
 image:
-  repository: <your_ecr_repo>
+  repository: ""
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -16,8 +18,12 @@ env:
       secretKeyRef:
         name: auth-db-secret
         key: DATABASE_URL
+
   - name: JWT_SECRET_KEY
     valueFrom:
       secretKeyRef:
         name: auth-secret
         key: JWT_SECRET_KEY
+
+  - name: JWT_ALGORITHM
+    value: "HS256"  

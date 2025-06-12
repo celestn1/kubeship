@@ -5,42 +5,41 @@ name: Deploy KubeShip Infrastructure on AWS EKS
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths:
-      - terraform/**
-      - .github/workflows/deploy-infra.yaml
-
-concurrency:
-  group: deploy-infra-${{ github.ref }}
-  cancel-in-progress: true
+      - 'terraform/**'
+      - 'helm-charts/**'
+      - 'manifests/**'
+      - '.github/workflows/ci-cd.yaml'
 
 permissions:
-  id-token: write    
-  contents: read  
+  id-token: write    # to assume AWS role via OIDC
+  contents: read
 
 env:
-  IMAGE_TAG:       latest
+  # Docker/ECR
+  IMAGE_TAG:       ${{ github.sha }}
   ECR_REPO_1:      auth-service
   ECR_REPO_2:      frontend
   ECR_REPO_3:      nginx-gateway
-  REGION:          ${{ secrets.AWS_REGION }}
-  ACCOUNT_ID:      ${{ secrets.AWS_ACCOUNT_ID }}
-  TF_PROJECT_NAME: ${{ secrets.TF_PROJECT_NAME }}   
-  TF_STATE_BUCKET:              ${{ secrets.TF_STATE_BUCKET }}
-  TF_LOCK_TABLE:                ${{ secrets.TF_LOCK_TABLE }}
-  TF_ENVIRONMENT:               ${{ secrets.TF_ENVIRONMENT }}
-  TF_EKS_CLUSTER_NAME:          ${{ secrets.TF_EKS_CLUSTER_NAME }}
-  TF_GITOPS_REPO_URL:           ${{ secrets.TF_GITOPS_REPO_URL }}
-  TF_TARGET_REVISION:           ${{ secrets.TF_TARGET_REVISION }}
-  TF_ARGOCD_APP_MANIFEST_PATH:  ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
-  TF_AVAILABILITY_ZONE_1:       ${{ secrets.TF_AVAILABILITY_ZONE_1 }}
-  TF_AVAILABILITY_ZONE_2:       ${{ secrets.TF_AVAILABILITY_ZONE_2 }}
-  TF_VAR_terraform_caller_arn:  ${{ secrets.CI_IAM_ROLE_ARN }}
+
+  # AWS & Terraform
+  AWS_REGION:                      ${{ secrets.AWS_REGION }}
+  AWS_ACCOUNT_ID:                  ${{ secrets.AWS_ACCOUNT_ID }}
+  TF_STATE_BUCKET:                 ${{ secrets.TF_STATE_BUCKET }}
+  TF_LOCK_TABLE:                   ${{ secrets.TF_LOCK_TABLE }}
+  TF_VAR_project_name:             ${{ secrets.TF_PROJECT_NAME }}
+  TF_VAR_environment:              ${{ secrets.TF_ENVIRONMENT }}
+  TF_VAR_eks_cluster_name:         ${{ secrets.TF_EKS_CLUSTER_NAME }}
+  TF_VAR_gitops_repo_url:          ${{ secrets.TF_GITOPS_REPO_URL }}
+  TF_VAR_target_revision:          ${{ secrets.TF_TARGET_REVISION }}
+  TF_VAR_argocd_app_manifest_path: ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
+  TF_VAR_availability_zones:       '["${{ secrets.TF_AVAILABILITY_ZONE_1 }}","${{ secrets.TF_AVAILABILITY_ZONE_2 }}"]'
+  TF_VAR_terraform_caller_arn:     ${{ secrets.CI_IAM_ROLE_ARN }}
 
 jobs:
   build-and-push:
-    name: Build & Push Docker images to ECR
+    name: Build & Push Docker Images
     runs-on: ubuntu-latest
     outputs:
       auth-digest:     ${{ steps.auth-digest.outputs.digest }}
@@ -50,36 +49,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Detect changed services
-        id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            auth-service:
-              - 'microservices/auth-service/**'
-            frontend:
-              - 'microservices/frontend/**'
-            nginx-gateway:
-              - 'nginx/**'
-            shared:
-              - 'shared/**'
-
-      - name: Configure AWS credentials for ECR
+      - name: Configure AWS creds for ECR
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          aws-region:            ${{ env.REGION }}
+          aws-region:            ${{ env.AWS_REGION }}
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Ensure ECR repos exist
+      - name: Ensure ECR repos
         run: |
           for svc in auth-service frontend nginx-gateway; do
-            aws ecr describe-repositories \
-              --repository-names "${TF_PROJECT_NAME}-$svc" \
-              --region "${REGION}" >/dev/null 2>&1 || \
-            aws ecr create-repository \
-              --repository-name "${TF_PROJECT_NAME}-$svc" \
-              --region "${REGION}"
+            aws ecr describe-repositories --repository-names "${TF_VAR_project_name}-$svc" --region "${AWS_REGION}" \
+              || aws ecr create-repository --repository-name "${TF_VAR_project_name}-$svc" --region "${AWS_REGION}"
           done
 
       - uses: aws-actions/amazon-ecr-login@v2
@@ -89,59 +70,37 @@ jobs:
           driver: docker-container
           use: true
 
-      # -------- auth-service --------
-      - name: Build auth-service image
-        if: ${{ steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true' }}
-        run: |
-          docker build -t $ECR_REPO_1:$IMAGE_TAG -f ./microservices/auth-service/Dockerfile ./microservices/auth-service
+      - name: Build auth-service
+        run: docker build -t auth-service:${{ env.IMAGE_TAG }} -f ./microservices/auth-service/Dockerfile ./microservices/auth-service
 
-      - name: Tag, Push auth-service image to ECR
+      - name: Push auth-service
         id: auth-digest
-        if: ${{ steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true' }}
         run: |
-          IMAGE_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-$ECR_REPO_1
-          docker tag $ECR_REPO_1:$IMAGE_TAG $IMAGE_URI:$IMAGE_TAG
-          docker push $IMAGE_URI:$IMAGE_TAG
-          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_URI:$IMAGE_TAG)
-          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+          URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_1 }}
+          docker tag auth-service:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
+          docker push $URI:${{ env.IMAGE_TAG }}
+          echo "digest=$URI@$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})" >> $GITHUB_OUTPUT
 
-      # -------- frontend --------
-      - name: Build frontend image
-        if: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true' }}
+      - name: Build & Push frontend
         run: |
-          docker build -t $ECR_REPO_2:$IMAGE_TAG -f ./microservices/frontend/Dockerfile .
+          docker build -t frontend:${{ env.IMAGE_TAG }} -f microservices/frontend/Dockerfile .
+          URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_2 }}
+          docker tag frontend:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
+          docker push $URI:${{ env.IMAGE_TAG }}
+          echo "frontend-digest=$URI@$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})" >> $GITHUB_OUTPUT
 
-      - name: Tag, Push frontend image to ECR
-        id: frontend-digest
-        if: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true' }}
+      - name: Build & Push nginx-gateway
         run: |
-          IMAGE_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-$ECR_REPO_2
-          docker tag $ECR_REPO_2:$IMAGE_TAG $IMAGE_URI:$IMAGE_TAG
-          docker push $IMAGE_URI:$IMAGE_TAG
-          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_URI:$IMAGE_TAG)
-          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
-
-      # -------- nginx-gateway --------
-      - name: Build nginx-gateway image
-        if: ${{ steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs.shared == 'true' }}
-        run: |
-          docker build -t $ECR_REPO_3:$IMAGE_TAG -f ./nginx/Dockerfile ./nginx
-
-
-      - name: Tag, Push nginx-gateway image to ECR
-        id: nginx-digest
-        if: ${{ steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs.shared == 'true' }}
-        run: |
-          IMAGE_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-$ECR_REPO_3
-          docker tag $ECR_REPO_3:$IMAGE_TAG $IMAGE_URI:$IMAGE_TAG
-          docker push $IMAGE_URI:$IMAGE_TAG
-          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_URI:$IMAGE_TAG)
-          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+          docker build -t nginx-gateway:${{ env.IMAGE_TAG }} -f ./nginx/Dockerfile ./nginx
+          URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_3 }}
+          docker tag nginx-gateway:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
+          docker push $URI:${{ env.IMAGE_TAG }}
+          echo "nginx-digest=$URI@$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})" >> $GITHUB_OUTPUT
 
   deploy:
-    name: Provision & Bootstrap EKS
-    runs-on: ubuntu-latest
+    name: Deploy Infrastructure & Apps
     needs: build-and-push
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: terraform
@@ -152,8 +111,8 @@ jobs:
       - name: Authenticate to AWS via OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume:    ${{ secrets.CI_IAM_ROLE_ARN }}
-          aws-region:        ${{ env.REGION }}
+          role-to-assume:    ${{ env.TF_VAR_terraform_caller_arn }}
+          aws-region:        ${{ env.AWS_REGION }}
           role-session-name: github-actions-eks
 
       - name: Set up Terraform
@@ -166,50 +125,39 @@ jobs:
           terraform init -upgrade \
             -backend-config="bucket=${TF_STATE_BUCKET}" \
             -backend-config="key=infra/terraform.tfstate" \
-            -backend-config="region=${REGION}" \
+            -backend-config="region=${AWS_REGION}" \
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
       - name: Terraform Plan (cluster only)
         run: |
           terraform plan -target=module.eks -out=tfplan-cluster \
-            -var="project_name=${TF_PROJECT_NAME}" \
-            -var="environment=${TF_ENVIRONMENT}" \
-            -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
-            -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
-            -var="target_revision=${TF_TARGET_REVISION}" \
-            -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}" \
-            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]" \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
-            -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
-            -var="terraform_caller_arn=${{ secrets.CI_IAM_ROLE_ARN }}"
-
-
+            -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
+      
       - name: Terraform Apply (cluster only)
         run: terraform apply -auto-approve tfplan-cluster
 
       - name: Configure kubectl
         run: |
           aws eks update-kubeconfig \
-            --name "${{ env.TF_EKS_CLUSTER_NAME }}" \
-            --region "${{ env.REGION }}"
+            --name "${{ env.TF_VAR_eks_cluster_name }}" \
+            --region "${{ env.AWS_REGION }}"
 
       - name: Install ArgoCD CRDs
         run: |
-          kubectl apply -k "https://github.com/argoproj/argo-cd/manifests/crds?ref=v2.9.3"
+          kubectl apply -k https://github.com/argoproj/argo-cd/manifests/crds?ref=v2.9.3
 
       - name: Terraform Plan & Apply (full sync)
         run: |
-          terraform plan -out=tfplan2 \
-            -var="project_name=${TF_PROJECT_NAME}" \
-            -var="environment=${TF_ENVIRONMENT}" \
-            -var="eks_cluster_name=${TF_EKS_CLUSTER_NAME}" \
-            -var="gitops_repo_url=${TF_GITOPS_REPO_URL}" \
-            -var="target_revision=${TF_TARGET_REVISION}" \
-            -var="argocd_app_manifest_path=${TF_ARGOCD_APP_MANIFEST_PATH}" \
-            -var="availability_zones=[\"${TF_AVAILABILITY_ZONE_1}\",\"${TF_AVAILABILITY_ZONE_2}\"]" \
+          terraform plan -out=tfplan-full \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
-            -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}" \
-            -var="terraform_caller_arn=${{ secrets.CI_IAM_ROLE_ARN }}"  
-          terraform apply -auto-approve tfplan2
+            -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
+          terraform apply -auto-approve tfplan-full
+
+      - name: Refresh ArgoCD Apps
+        run: |
+          LB=$(kubectl get svc argocd-server -n argocd \
+                 -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          curl -k "https://$LB/api/v1/applications?refresh=true" || true

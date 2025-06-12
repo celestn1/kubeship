@@ -1,3 +1,5 @@
+# kubeship/manifests/nginx-gateway-app.yaml
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,6 +11,12 @@ spec:
     repoURL: https://github.com/celestn1/kubeship
     targetRevision: HEAD
     path: helm-charts/nginx-gateway
+    helm:
+      values: |
+        image:
+          repository: ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-nginx-gateway
+          tag:       ${{ env.IMAGE_TAG }}
+
   destination:
     server: https://kubernetes.default.svc
     namespace: default

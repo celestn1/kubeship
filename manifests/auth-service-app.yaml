@@ -1,3 +1,5 @@
+# kubeship/manifests/auth-service-app.yaml
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,6 +11,12 @@ spec:
     repoURL: https://github.com/celestn1/kubeship
     targetRevision: main
     path: helm-charts/auth-service
+    helm:
+      parameters:
+        - name: image.repository
+          value: 240398787204.dkr.ecr.eu-west-2.amazonaws.com/kubeship-auth-service
+        - name: image.tag
+          value: latest  
     
   destination:
     server: https://kubernetes.default.svc
