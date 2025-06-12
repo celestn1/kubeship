@@ -10,5 +10,5 @@ output "secret_arns" {
 
 output "secret_names" {
   description = "Names of the secrets"
-  value       = keys(aws_secretsmanager_secret.this)
+  value       = keys(aws_secretsmanager_secret.secrets)
 }
