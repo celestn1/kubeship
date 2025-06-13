@@ -14,17 +14,17 @@ resource "aws_vpc" "main" {
 
 # Public subnets with EKS tags
 resource "aws_subnet" "public" {
-  for_each               = toset(var.availability_zones)
-  vpc_id                 = aws_vpc.main.id
-  cidr_block             = cidrsubnet(var.vpc_cidr_block, 8, index(var.availability_zones, each.value))
+  for_each                = toset(var.availability_zones)
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = cidrsubnet(var.vpc_cidr_block, 8, index(var.availability_zones, each.value))
   map_public_ip_on_launch = true
-  availability_zone      = each.value
+  availability_zone       = each.value
 
   tags = {
-    Name                                      = "${var.project_name}-public-${each.value}"
-    Project                                   = var.project_name
-    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-    "kubernetes.io/role/elb"                    = "1"
+    Name                                           = "${var.project_name}-public-${each.value}"
+    Project                                        = var.project_name
+    "kubernetes.io/cluster/${var.cluster_name}"    = "shared"
+    "kubernetes.io/role/elb"                       = "1"
   }
 }
 
@@ -36,17 +36,16 @@ resource "aws_subnet" "private" {
   availability_zone = each.value
 
   tags = {
-    Name                                          = "${var.project_name}-private-${each.value}"
-    Project                                       = var.project_name
-    "kubernetes.io/cluster/${var.cluster_name}"     = "shared"
-    "kubernetes.io/role/internal-elb"               = "1"
+    Name                                           = "${var.project_name}-private-${each.value}"
+    Project                                        = var.project_name
+    "kubernetes.io/cluster/${var.cluster_name}"    = "shared"
+    "kubernetes.io/role/internal-elb"              = "1"
   }
 }
 
 # Internet Gateway (public)
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
-  depends_on = [ aws_nat_gateway.this ]
 
   tags = {
     Name    = "${var.project_name}-igw"
@@ -57,14 +56,14 @@ resource "aws_internet_gateway" "igw" {
 # Elastic IP for NAT
 resource "aws_eip" "nat" {
   domain = "vpc"
-  
+
   tags = {
     Name    = "${var.project_name}-nat-eip"
     Project = var.project_name
   }
 }
 
-# NAT Gateway for private subnets
+# NAT Gateway for private subnets (depends on IGW to exist)
 resource "aws_nat_gateway" "this" {
   allocation_id = aws_eip.nat.id
   subnet_id     = values(aws_subnet.public)[0].id
@@ -73,6 +72,10 @@ resource "aws_nat_gateway" "this" {
     Name    = "${var.project_name}-nat-gateway"
     Project = var.project_name
   }
+
+  depends_on = [
+    aws_internet_gateway.igw
+  ]
 }
 
 # Public route table
