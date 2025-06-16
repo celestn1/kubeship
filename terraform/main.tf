@@ -77,6 +77,9 @@ module "eks" {
   cluster_enabled_log_types       = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
   cluster_endpoint_public_access  = true
   cluster_endpoint_private_access = false
+  create_cluster_security_group   = false
+  create_node_security_group      = false  
+  enable_cluster_creator_admin_permissions = true
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 
   # Use the EKS Access Entry API (no more aws-auth blocks)
@@ -96,9 +99,9 @@ module "eks" {
   # Bring your own worker nodes
   eks_managed_node_groups = {
     default = {
-      desired_size   = 1
-      min_size       = 1
-      max_size       = 3
+      desired_size   = 2
+      min_size       = 2
+      max_size       = 4
       instance_types = ["t3.medium"]
       # optional: key_name = var.ssh_key_name
       # optional: disk_size = 20

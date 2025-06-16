@@ -10,9 +10,9 @@ on:
       - 'terraform/**'
       - 'helm-charts/**'
       - 'manifests/**'
-      - '.github/workflows/ci-cd.yaml'
+      - '.github/workflows/deploy-infra.yaml'
 
-permissions:
+permissions: 
   id-token: write    # to assume AWS role via OIDC
   contents: read
 
@@ -129,22 +129,36 @@ jobs:
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
       - name: Terraform Plan (cluster only)
+        id: plan
         run: |
           terraform plan -target=module.eks -out=tfplan-cluster \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
+        continue-on-error: true
+
+      - name: Terraform plan status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
       
       - name: Terraform Apply (cluster only)
-        run: terraform apply -auto-approve tfplan-cluster
+        id: apply
+        run: terraform apply -auto-approve -input=false -parallelism=1 tfplan-cluster
 
-      - name: Configure kubectl
-        run: |
-          aws eks update-kubeconfig \
-            --name "${{ env.TF_VAR_eks_cluster_name }}" \
-            --region "${{ env.AWS_REGION }}"
+      - name: Configure AWS creds for ECR
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-region:            ${{ env.AWS_REGION }}
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Get Kubernetes config
+        id: getconfig
+        if: steps.apply.outcome == 'success'
+        run: aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION}}
 
       - name: Install ArgoCD CRDs
+        if: steps.apply.outcome == 'success' && steps.getconfig.outcome == 'success'
         run: |
           kubectl apply -k https://github.com/argoproj/argo-cd/manifests/crds?ref=v2.9.3
 

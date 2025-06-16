@@ -4,11 +4,6 @@ output "vpc_id" {
   value       = module.vpc.vpc_id
 }
 
-output "cluster_name" {
-  description = "Name of the EKS cluster"
-  value       = module.eks.cluster_name
-}
-
 output "waf_web_acl_arn" {
   description = "ARN of the WAF WebACL"
   value       = module.waf.web_acl_arn
@@ -24,9 +19,24 @@ output "alb_dns_name" {
   value       = module.alb.alb_dns_name
 }
 
+output "cluster_name" {
+  description = "Name of the EKS cluster"
+  value       = module.eks.cluster_name
+}
+
 output "cluster_endpoint" {
   description = "API endpoint of the EKS cluster"
   value       = module.eks.cluster_endpoint
+}
+
+output "cluster_platform_version" {
+  description = "Platform version for the EKS cluster"
+  value       = module.eks.cluster_platform_version
+}
+
+output "cluster_status" {
+  description = "Status of the EKS cluster. One of `CREATING`, `ACTIVE`, `DELETING`, `FAILED`"
+  value       = module.eks.cluster_status
 }
 
 output "cluster_certificate_authority_data" {
@@ -52,4 +62,10 @@ output "frontend_image_digest" {
 output "nginx_image_digest" {
   description = "SHA256 digest for the nginx-gateway image"
   value       = var.nginx_image_digest
+}
+
+# Kubectl Configuration
+output "configure_kubectl" {
+  description = "configure kubectl: make sure you're logged in with the correct AWS profile"
+  value      = "aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.aws_region}"
 }
