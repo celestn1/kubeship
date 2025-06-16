@@ -64,6 +64,12 @@ module "alb" {
 }
 
 # EKS cluster provisioning (registry module)
+module "eks_node_role" {
+  source       = "./modules/eks-node-role"
+  project_name = var.project_name
+  environment  = var.environment
+}
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = ">= 20.37.0"
@@ -96,6 +102,9 @@ module "eks" {
     }
   }
 
+
+
+
   # Bring your own worker nodes
   eks_managed_node_groups = {
     default = {
@@ -103,6 +112,7 @@ module "eks" {
       min_size       = 2
       max_size       = 4
       instance_types = ["t3.medium"]
+      iam_role_arn   = module.eks_node_role.iam_role_arn
       # optional: key_name = var.ssh_key_name
       # optional: disk_size = 20
     }
