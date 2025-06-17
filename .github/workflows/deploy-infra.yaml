@@ -128,7 +128,15 @@ jobs:
             -backend-config="region=${AWS_REGION}" \
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
-      - name: Terraform Plan (cluster only)
+      # ✅ PLAN AND APPLY VPC (creates NAT, subnets, route tables)
+      - name: Terraform Plan (VPC only)
+        run: terraform plan -target=module.vpc -out=tfplan-vpc
+
+      - name: Terraform Apply (VPC only)
+        run: terraform apply -auto-approve tfplan-vpc
+
+      # ✅ PLAN AND APPLY EKS
+      - name: Terraform Plan (EKS only)
         id: plan
         run: |
           terraform plan -target=module.eks -out=tfplan-cluster \
@@ -140,8 +148,8 @@ jobs:
       - name: Terraform plan status
         if: steps.plan.outcome == 'failure'
         run: exit 1
-      
-      - name: Terraform Apply (cluster only)
+
+      - name: Terraform Apply (EKS only)
         id: apply
         run: terraform apply -auto-approve -input=false -parallelism=1 tfplan-cluster
 
