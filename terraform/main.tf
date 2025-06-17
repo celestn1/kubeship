@@ -18,16 +18,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Fetch EKS endpoint & auth info
-data "aws_eks_cluster" "this" {
-  name       = module.eks.cluster_name
-  depends_on = [module.eks]
-}
-
-data "aws_eks_cluster_auth" "this" {
-  name       = module.eks.cluster_name
-  depends_on = [module.eks]
-}
 
 # Kubernetes provider configuration
 provider "kubernetes" {
@@ -83,15 +73,13 @@ module "eks" {
   cluster_enabled_log_types       = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
   cluster_endpoint_public_access  = true
   cluster_endpoint_private_access = false
-#  create_cluster_security_group   = false
-#  create_node_security_group      = false  
+  # create_cluster_security_group   = false
+  # create_node_security_group      = false  
   enable_cluster_creator_admin_permissions = true
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 
-  # Use the EKS Access Entry API
-
+  # Use the EKS Access Entry API (no more aws-auth blocks)
   authentication_mode = "API_AND_CONFIG_MAP"
-
   access_entries = {
     terraform_admin = {
       principal_arn = var.terraform_caller_arn
@@ -102,17 +90,9 @@ module "eks" {
         }
       }
     }
-
-    eks_nodes = {
-      principal_arn = module.eks_node_role.iam_role_arn
-      policy_associations = {
-        node_group_access = {
-          policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
-          access_scope = { type = "cluster" }
-        }
-      }
-    }
   }
+
+
 
 
   # Bring your own worker nodes
@@ -133,6 +113,19 @@ module "eks" {
     Project     = var.project_name
   }
 }
+
+
+# Fetch EKS endpoint & auth info
+data "aws_eks_cluster" "this" {
+  name       = module.eks.cluster_name
+  depends_on = [module.eks]
+}
+
+data "aws_eks_cluster_auth" "this" {
+  name       = module.eks.cluster_name
+  depends_on = [module.eks]
+}
+
 
 # ECR
 module "ecr" {
