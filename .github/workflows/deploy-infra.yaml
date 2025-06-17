@@ -70,18 +70,18 @@ jobs:
           driver: docker-container
           use: true
 
-      - name: Build auth-service
-        run: docker build -t auth-service:${{ env.IMAGE_TAG }} -f ./microservices/auth-service/Dockerfile ./microservices/auth-service
-
-      - name: Push auth-service
+      - name: Build & Push auth-service
         id: auth-digest
+        if: ${{ steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true' }}        
         run: |
+          docker build -t auth-service:${{ env.IMAGE_TAG }} -f ./microservices/auth-service/Dockerfile ./microservices/auth-service        
           URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_1 }}
           docker tag auth-service:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
           docker push $URI:${{ env.IMAGE_TAG }}
           echo "digest=$URI@$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})" >> $GITHUB_OUTPUT
 
       - name: Build & Push frontend
+        if: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true' }}      
         run: |
           docker build -t frontend:${{ env.IMAGE_TAG }} -f microservices/frontend/Dockerfile .
           URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_2 }}
@@ -90,6 +90,7 @@ jobs:
           echo "frontend-digest=$URI@$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})" >> $GITHUB_OUTPUT
 
       - name: Build & Push nginx-gateway
+        if: ${{ steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs.shared == 'true' }}      
         run: |
           docker build -t nginx-gateway:${{ env.IMAGE_TAG }} -f ./nginx/Dockerfile ./nginx
           URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_3 }}
