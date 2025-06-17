@@ -30,3 +30,4 @@ resource "aws_iam_role_policy_attachment" "worker_node_policies" {
   policy_arn = each.key
   role       = aws_iam_role.eks_node_group_role.name
 }
+

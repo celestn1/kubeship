@@ -12,18 +12,16 @@ on:
       - 'manifests/**'
       - '.github/workflows/deploy-infra.yaml'
 
-permissions: 
-  id-token: write    # to assume AWS role via OIDC
+permissions:
+  id-token: write
   contents: read
 
 env:
-  # Docker/ECR
-  IMAGE_TAG:       ${{ github.sha }}
-  ECR_REPO_1:      auth-service
-  ECR_REPO_2:      frontend
-  ECR_REPO_3:      nginx-gateway
+  IMAGE_TAG: ${{ github.sha }}
+  ECR_REPO_1: auth-service
+  ECR_REPO_2: frontend
+  ECR_REPO_3: nginx-gateway
 
-  # AWS & Terraform
   AWS_REGION:                      ${{ secrets.AWS_REGION }}
   AWS_ACCOUNT_ID:                  ${{ secrets.AWS_ACCOUNT_ID }}
   TF_STATE_BUCKET:                 ${{ secrets.TF_STATE_BUCKET }}
@@ -43,8 +41,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       auth-digest:     ${{ steps.auth-digest.outputs.digest }}
+      auth-tag:        ${{ steps.auth-digest.outputs.tag }}
       frontend-digest: ${{ steps.frontend-digest.outputs.digest }}
+      frontend-tag:    ${{ steps.frontend-digest.outputs.tag }}
       nginx-digest:    ${{ steps.nginx-digest.outputs.digest }}
+      nginx-tag:       ${{ steps.nginx-digest.outputs.tag }}
 
     steps:
       - uses: actions/checkout@v3
@@ -70,32 +71,78 @@ jobs:
           driver: docker-container
           use: true
 
-      - name: Build auth-service
-        run: docker build -t auth-service:${{ env.IMAGE_TAG }} -f ./microservices/auth-service/Dockerfile ./microservices/auth-service
-
-      - name: Push auth-service
-        id: auth-digest
+      - name: Build & Push auth-service
+        id: auth-service-digest
         run: |
           URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_1 }}
-          docker tag auth-service:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
+          
+          # Build once
+          docker build -t auth-service:${{ env.IMAGE_TAG }} -f ./microservices/auth-service/Dockerfile ./microservices/auth-service
+
+          # Tag with both SHA and latest
+          docker tag frontend:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
+          docker tag frontend:${{ env.IMAGE_TAG }} $URI:latest
+
+          # Push both tags
           docker push $URI:${{ env.IMAGE_TAG }}
-          echo "digest=$URI@$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})" >> $GITHUB_OUTPUT
+          docker push $URI:latest
+
+          # Get digest (same for both tags)
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})
+
+          # Output both tag and digest
+          echo "digest=$URI@$DIGEST" >> $GITHUB_OUTPUT
+          echo "tag=${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+          echo "latest_digest=$URI@$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Build & Push frontend
+        id: frontend-digest
         run: |
-          docker build -t frontend:${{ env.IMAGE_TAG }} -f microservices/frontend/Dockerfile .
           URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_2 }}
+          
+          # Build once
+          docker build -t frontend:${{ env.IMAGE_TAG }} -f microservices/frontend/Dockerfile .
+
+          # Tag with both SHA and latest
           docker tag frontend:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
+          docker tag frontend:${{ env.IMAGE_TAG }} $URI:latest
+
+          # Push both tags
           docker push $URI:${{ env.IMAGE_TAG }}
-          echo "frontend-digest=$URI@$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})" >> $GITHUB_OUTPUT
+          docker push $URI:latest
+
+          # Get digest (same for both tags)
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})
+
+          # Output both tag and digest
+          echo "digest=$URI@$DIGEST" >> $GITHUB_OUTPUT
+          echo "tag=${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+          echo "latest_digest=$URI@$DIGEST" >> $GITHUB_OUTPUT
+
 
       - name: Build & Push nginx-gateway
+        id: nginx-gateway-digest
         run: |
+          URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_1 }}
+          
+          # Build once
           docker build -t nginx-gateway:${{ env.IMAGE_TAG }} -f ./nginx/Dockerfile ./nginx
-          URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_3 }}
-          docker tag nginx-gateway:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
+
+          # Tag with both SHA and latest
+          docker tag frontend:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
+          docker tag frontend:${{ env.IMAGE_TAG }} $URI:latest
+
+          # Push both tags
           docker push $URI:${{ env.IMAGE_TAG }}
-          echo "nginx-digest=$URI@$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})" >> $GITHUB_OUTPUT
+          docker push $URI:latest
+
+          # Get digest (same for both tags)
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})
+
+          # Output both tag and digest
+          echo "digest=$URI@$DIGEST" >> $GITHUB_OUTPUT
+          echo "tag=${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+          echo "latest_digest=$URI@$DIGEST" >> $GITHUB_OUTPUT
 
   deploy:
     name: Deploy Infrastructure & Apps
@@ -132,18 +179,18 @@ jobs:
         id: plan
         run: |
           terraform plan -target=module.eks -out=tfplan-cluster \
-            -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
-            -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
-            -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
+            -var="auth_image_tag=${{ needs.build-and-push.outputs.auth-tag }}" \
+            -var="frontend_image_tag=${{ needs.build-and-push.outputs.frontend-tag }}" \
+            -var="nginx_image_tag=${{ needs.build-and-push.outputs.nginx-tag }}"
         continue-on-error: true
 
       - name: Terraform plan status
         if: steps.plan.outcome == 'failure'
         run: exit 1
-      
+
       - name: Terraform Apply (cluster only)
         id: apply
-        run: terraform apply -auto-approve -input=false -parallelism=1 tfplan-cluster
+        run: terraform apply -auto-approve -input=false tfplan-cluster
 
       - name: Configure AWS creds for ECR
         uses: aws-actions/configure-aws-credentials@v3
@@ -153,21 +200,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Get Kubernetes config
-        id: getconfig
         if: steps.apply.outcome == 'success'
-        run: aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION}}
+        run: aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION }}
 
       - name: Install ArgoCD CRDs
-        if: steps.apply.outcome == 'success' && steps.getconfig.outcome == 'success'
-        run: |
-          kubectl apply -k https://github.com/argoproj/argo-cd/manifests/crds?ref=v2.9.3
+        if: steps.apply.outcome == 'success'
+        run: kubectl apply -k https://github.com/argoproj/argo-cd/manifests/crds?ref=v2.9.3
 
       - name: Terraform Plan & Apply (full sync)
         run: |
           terraform plan -out=tfplan-full \
-            -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
-            -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
-            -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
+            -var="auth_image_tag=${{ needs.build-and-push.outputs.auth-tag }}" \
+            -var="frontend_image_tag=${{ needs.build-and-push.outputs.frontend-tag }}" \
+            -var="nginx_image_tag=${{ needs.build-and-push.outputs.nginx-tag }}"
           terraform apply -auto-approve tfplan-full
 
       - name: Refresh ArgoCD Apps
