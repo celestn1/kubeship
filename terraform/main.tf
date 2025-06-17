@@ -92,16 +92,6 @@ module "eks" {
         }
       }
     }
-
-    eks_nodes = {
-      principal_arn = module.eks_node_role.iam_role_arn
-      policy_associations = {
-        node_group_access = {
-          policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
-          access_scope = { type = "cluster" }
-        }
-      }
-    }
   }
 
 

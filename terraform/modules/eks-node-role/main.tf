@@ -1,4 +1,4 @@
-// kubeship/terraform/modules/eks/main.tf
+// kubeship/terraform/modules/eks-node-role/main.tf
 
 resource "aws_iam_role" "eks_node_group_role" {
   name = "${var.project_name}-eks-node-group-role"

@@ -1,4 +1,4 @@
-// kubeship/terraform/modules/eks/outputs.tf
+// kubeship/terraform/modules/eks-node-role/outputs.tf
 
 output "iam_role_arn" {
   description = "IAM role ARN for EKS managed node group"

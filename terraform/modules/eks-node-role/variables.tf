@@ -1,4 +1,4 @@
-// kubeship/terraform/modules/eks/variables.tf
+// kubeship/terraform/modules/eks-node-role/variables.tf
 variable "project_name" {
   description = "Project name for tagging"
   type        = string
