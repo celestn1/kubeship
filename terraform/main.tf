@@ -102,7 +102,7 @@ module "eks" {
       min_size       = 2
       max_size       = 4
       instance_types = ["t3.medium"]
-      iam_role_arn   = module.eks_node_role.iam_role_arn
+      # iam_role_arn   = module.eks_node_role.iam_role_arn
       # optional: key_name = var.ssh_key_name
       # optional: disk_size = 20
     }
