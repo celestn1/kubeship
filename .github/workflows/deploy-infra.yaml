@@ -80,8 +80,8 @@ jobs:
           docker build -t auth-service:${{ env.IMAGE_TAG }} -f ./microservices/auth-service/Dockerfile ./microservices/auth-service
 
           # Tag with both SHA and latest
-          docker tag frontend:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
-          docker tag frontend:${{ env.IMAGE_TAG }} $URI:latest
+          docker tag auth-service:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
+          docker tag auth-service:${{ env.IMAGE_TAG }} $URI:latest
 
           # Push both tags
           docker push $URI:${{ env.IMAGE_TAG }}
@@ -123,14 +123,14 @@ jobs:
       - name: Build & Push nginx-gateway
         id: nginx-gateway-digest
         run: |
-          URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_1 }}
+          URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_3 }}
           
           # Build once
           docker build -t nginx-gateway:${{ env.IMAGE_TAG }} -f ./nginx/Dockerfile ./nginx
 
           # Tag with both SHA and latest
-          docker tag frontend:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
-          docker tag frontend:${{ env.IMAGE_TAG }} $URI:latest
+          docker tag nginx-gateway:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
+          docker tag nginx-gateway:${{ env.IMAGE_TAG }} $URI:latest
 
           # Push both tags
           docker push $URI:${{ env.IMAGE_TAG }}
