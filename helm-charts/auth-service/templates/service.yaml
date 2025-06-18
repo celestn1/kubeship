@@ -3,15 +3,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "auth-service.fullname" . }}
+  name: "{{ include "auth-service.fullname" . }}"
   labels:
-    app.kubernetes.io/name:     {{ include "auth-service.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: "{{ include "auth-service.name" . }}"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port:       {{ .Values.service.port }}
+    - port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}
   selector:
-    app.kubernetes.io/name:     {{ include "auth-service.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: "{{ include "auth-service.name" . }}"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"

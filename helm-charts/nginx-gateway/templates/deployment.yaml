@@ -1,3 +1,5 @@
+# kubeship/helm-charts/nginx-gateway/templates/deployment.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:

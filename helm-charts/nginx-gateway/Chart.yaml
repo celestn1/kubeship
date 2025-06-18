@@ -1,3 +1,5 @@
+# kubeship/helm-charts/nginx-gateway/Chart.yaml
+
 apiVersion: v2
 name: nginx-gateway
 description: NGINX reverse proxy for KubeShip
