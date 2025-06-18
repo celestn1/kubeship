@@ -63,9 +63,3 @@ output "nginx_image_digest" {
   description = "SHA256 digest for the nginx-gateway image"
   value       = var.nginx_image_digest
 }
-
-# Kubectl Configuration
-output "configure_kubectl" {
-  description = "configure kubectl: make sure you're logged in with the correct AWS profile"
-  value      = "aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.aws_region}"
-}

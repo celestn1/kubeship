@@ -16,3 +16,4 @@ env:
   - name: VITE_API_URL
     value: /v1/auth
 
+fullnameOverride: frontend
