@@ -1,3 +1,4 @@
+# kubeship/helm-charts/auth-service/Chart.yaml
 apiVersion: v2
 name: auth-service
 description: Auth microservice Helm Chart
