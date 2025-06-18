@@ -167,11 +167,6 @@ jobs:
           kubectl auth can-i create deployments -n argocd
           kubectl auth can-i create services -n argocd
        
-      - name: Install ArgoCD CRDs
-        if: steps.apply.outcome == 'success' && steps.getconfig.outcome == 'success'
-        run: |
-          kubectl apply -k https://github.com/argoproj/argo-cd/manifests/crds?ref=v2.9.3 --validate=false
-
       - name: Terraform Plan & Apply (full sync)
         run: |
           terraform plan -out=tfplan-full \

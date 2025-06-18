@@ -14,14 +14,10 @@ resource "helm_release" "argocd" {
   chart            = "argo-cd"
   version          = var.argocd_chart_version
   create_namespace = false
-
-  skip_crds = true
   
   timeout = 1200
   wait    = true
   atomic  = false
-  force_update  = true
-  recreate_pods = true
 
   values = [
     file("${path.module}/values.yaml")
