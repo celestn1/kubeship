@@ -163,6 +163,9 @@ jobs:
         run: |
           echo "Checking kubeconfig file..."
           cat ~/.kube/config || echo "No kubeconfig found!"
+          kubectl auth can-i create pods -n argocd
+          kubectl auth can-i create deployments -n argocd
+          kubectl auth can-i create services -n argocd
        
       - name: Install ArgoCD CRDs
         if: steps.apply.outcome == 'success' && steps.getconfig.outcome == 'success'
