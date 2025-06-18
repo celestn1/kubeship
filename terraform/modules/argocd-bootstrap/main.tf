@@ -20,6 +20,8 @@ resource "helm_release" "argocd" {
   timeout = 1200
   wait    = true
   atomic  = false
+  force_update  = true
+  recreate_pods = true
 
   values = [
     file("${path.module}/values.yaml")
