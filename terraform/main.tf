@@ -73,9 +73,9 @@ module "eks" {
   cluster_enabled_log_types       = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
   cluster_endpoint_public_access  = true
   cluster_endpoint_private_access = false
-#  create_cluster_security_group   = false
-#  create_node_security_group      = false  
-  enable_cluster_creator_admin_permissions = true
+  # create_cluster_security_group   = false
+  # create_node_security_group      = false  
+  # enable_cluster_creator_admin_permissions = true
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 
   # Use the EKS Access Entry API
