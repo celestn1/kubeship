@@ -78,7 +78,7 @@ module "eks" {
   # enable_cluster_creator_admin_permissions = true
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 
-  # Use the EKS Access Entry API #
+  # Use the EKS Access Entry API
 
   authentication_mode = "API_AND_CONFIG_MAP"
 
