@@ -154,18 +154,16 @@ jobs:
         id: apply
         run: terraform apply -auto-approve -input=false -parallelism=1 tfplan-cluster
 
-      - name: Configure AWS creds for ECR
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-region:            ${{ env.AWS_REGION }}
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
       - name: Get Kubernetes config
         id: getconfig
         if: steps.apply.outcome == 'success'
         run: aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION}}
 
+      - name: Debug kubeconfig
+        run: |
+          echo "Checking kubeconfig file..."
+          cat ~/.kube/config || echo "No kubeconfig found!"
+       
       - name: Install ArgoCD CRDs
         if: steps.apply.outcome == 'success' && steps.getconfig.outcome == 'success'
         run: |
