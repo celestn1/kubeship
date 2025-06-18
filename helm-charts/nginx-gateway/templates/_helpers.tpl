@@ -1,5 +1,3 @@
-// kubeship/helm-charts/nginx-gateway/templates/_helpers.tpl
-
 {{- define "nginx.name" -}}
 {{ .Chart.Name }}
 {{- end }}

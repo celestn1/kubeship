@@ -22,6 +22,8 @@ spec:
             - name: config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+      imagePullSecrets:
+        - name: ecr-pull-secret
       volumes:
         - name: config
           configMap:
