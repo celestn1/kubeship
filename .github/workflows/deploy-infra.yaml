@@ -73,6 +73,21 @@ jobs:
           driver: docker-container
           use: true
 
+      - name: Detect changed services
+        id: changes
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            auth-service:
+              - 'microservices/auth-service/**'
+            frontend:
+              - 'microservices/frontend/**'
+            nginx-gateway:
+              - 'nginx/**'
+            shared:
+              - 'shared/**'
+
+
       - name: Build & Push auth-service
         id: auth-digest
         if: ${{ steps.changes.outputs['auth-service'] == 'true' || steps.changes.outputs.shared == 'true' }}        
