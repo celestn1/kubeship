@@ -36,7 +36,7 @@ variable "eks_cluster_name" {
 variable "eks_cluster_version" {
   description = "Kubernetes version for EKS"
   type        = string
-  default     = "1.26"
+  default     = "1.33"
 }
 
 variable "gitops_repo_url" {
