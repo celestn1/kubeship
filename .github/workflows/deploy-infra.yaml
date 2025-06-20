@@ -10,6 +10,9 @@ on:
       - 'terraform/**'
       - 'helm-charts/**'
       - 'manifests/**'
+      - 'microservices/**'
+      - 'nginx/**'
+      - 'shared/**'      
       - '.github/workflows/deploy-infra.yaml'
 
 permissions: 
