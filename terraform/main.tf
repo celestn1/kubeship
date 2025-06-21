@@ -171,13 +171,6 @@ module "argocd_bootstrap" {
 }
 
 # External Secrets Operator
-module "external_secrets" {
-  source     = "./modules/external-secrets"
-  aws_region = var.aws_region
-  namespace  = "external-secrets"
-  secrets_map = {}
-}
-
 module "external_secrets_resources" {
   source      = "./modules/external-secrets"
   aws_region  = var.aws_region  
