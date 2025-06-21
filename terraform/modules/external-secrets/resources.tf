@@ -1,4 +1,5 @@
 # modules/external-secrets/resources.tf
+
 resource "kubernetes_manifest" "external_secret" {
   for_each = var.secrets_map
 
@@ -6,23 +7,28 @@ resource "kubernetes_manifest" "external_secret" {
     apiVersion = "external-secrets.io/v1beta1"
     kind       = "ExternalSecret"
     metadata = {
-      name      = each.key
+      name      = lower(replace(each.key, "_", "-"))
       namespace = var.namespace
+      labels = {
+        managed-by = "terraform"
+        source     = "aws-secrets-manager"
+      }
     }
     spec = {
       refreshInterval = "1h"
       secretStoreRef = {
-        name = "aws-secrets"       # assume you created a SecretStore named aws-secrets
+        name = "aws-secrets"
         kind = "ClusterSecretStore"
       }
       target = {
-        name = each.key            # creates a K8s Secret with the same name
+        name            = each.key
+        creationPolicy  = "Owner"
       }
       data = [
         {
-          secretKey = each.key     # K8s Secret data key
+          secretKey = each.key
           remoteRef = {
-            key = each.key         # AWS SM secret name
+            key = each.value
           }
         }
       ]
@@ -30,5 +36,4 @@ resource "kubernetes_manifest" "external_secret" {
   }
 
   depends_on = [kubernetes_manifest.cluster_secret_store]
-
 }
