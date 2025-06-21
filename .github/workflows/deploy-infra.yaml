@@ -203,7 +203,7 @@ jobs:
       - name: Apply ArgoCD Application manifests
         run: |
           kubectl apply -f ../manifests/argocd-applications -n argocd
-
+      
       - name: Force sync ArgoCD apps
         run: |
           for app in $(kubectl get applications.argoproj.io -n argocd -o jsonpath='{.items[*].metadata.name}'); do

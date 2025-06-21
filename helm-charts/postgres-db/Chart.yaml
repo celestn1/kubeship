@@ -1,3 +1,5 @@
+# kubeship/helm-charts/postgres-db/Chart.yaml
+
 apiVersion: v2
 name: postgres-db
 description: PostgreSQL Helm Chart for KubeShip

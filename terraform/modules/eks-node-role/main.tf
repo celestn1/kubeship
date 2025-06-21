@@ -31,3 +31,7 @@ resource "aws_iam_role_policy_attachment" "worker_node_policies" {
   role       = aws_iam_role.eks_node_group_role.name
 }
 
+resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  role       = aws_iam_role.eks_node_group_role.name
+}

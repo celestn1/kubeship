@@ -1,3 +1,5 @@
+# kubeship/helm-charts/postgres-db/templates/service.yaml
+
 apiVersion: v1
 kind: Service
 metadata:
