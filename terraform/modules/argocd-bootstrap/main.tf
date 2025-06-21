@@ -24,11 +24,3 @@ resource "helm_release" "argocd" {
   ]
   depends_on = [ kubernetes_namespace.argocd ]
 }
-
-resource "null_resource" "apply_app_manifests" {
-  provisioner "local-exec" {
-    command = "kubectl apply -f ${path.module}/${var.argocd_app_manifest_path} -n ${var.argocd_namespace}"
-  }
-
-  depends_on = [helm_release.argocd]
-}

@@ -177,14 +177,7 @@ jobs:
         if: steps.apply.outcome == 'success'
         run: aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION}}
 
-      - name: Debug kubeconfig
-        run: |
-          echo "Checking kubeconfig file..."
-          cat ~/.kube/config || echo "No kubeconfig found!"
-          kubectl auth can-i create pods -n argocd
-          kubectl auth can-i create deployments -n argocd
-          kubectl auth can-i create services -n argocd
-       
+      
       - name: Terraform Plan & Apply (full sync)
         run: |
           terraform plan -out=tfplan-full \
@@ -193,8 +186,28 @@ jobs:
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
           terraform apply -auto-approve tfplan-full
 
+      - name: Wait for ArgoCD server to be ready
+        run: |
+          kubectl wait --for=condition=available deployment/argocd-server \
+            -n argocd --timeout=300s
+
+      - name: Apply ArgoCD Application manifests
+        run: |
+          kubectl apply -f ../manifests/argocd-applications -n argocd
+
+      - name: Force sync ArgoCD apps
+        run: |
+          for app in $(kubectl get applications.argoproj.io -n argocd -o jsonpath='{.items[*].metadata.name}'); do
+            kubectl patch application $app -n argocd \
+              --type merge -p '{"spec": {"syncPolicy": {"automated": {"prune": true, "selfHeal": true}}}}'
+          done
+
       - name: Refresh ArgoCD Apps
         run: |
           LB=$(kubectl get svc argocd-server -n argocd \
                  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
           curl -k "https://$LB/api/v1/applications?refresh=true" || true
+
+      - name: Verify deployed ArgoCD apps
+        run: |
+          kubectl get applications -n argocd 
