@@ -13,7 +13,7 @@ service:
 
 postgres:
   user: postgres
-  password: password123
+  password: f3412f25d6baebf
   database: auth_db
 
 persistence:

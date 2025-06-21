@@ -26,6 +26,6 @@ env:
         key: JWT_SECRET_KEY
 
   - name: JWT_ALGORITHM
-    value: "HS256"  
+    value: "HS256"
 
 fullnameOverride: auth-service
