@@ -58,6 +58,10 @@ jobs:
             -backend-config="region=${AWS_REGION}" \
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
+      - name: Configure kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ secrets.AWS_REGION }}
+            
       # ✅ Destroy Helm + ArgoCD-managed workloads first (depends on EKS)
       - name: Destroy ArgoCD + Apps
         run: terraform destroy -auto-approve -target=module.argocd-bootstrap
