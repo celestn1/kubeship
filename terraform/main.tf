@@ -160,6 +160,15 @@ module "secrets" {
   secrets_map  = var.secrets_map
 }
 
+# EKS IRSA for EBS CSI Driver
+module "eks_irsa_ebs" {
+  source             = "./modules/eks-irsa-ebs"
+  project_name       = var.project_name
+  environment        = var.environment
+  oidc_provider_arn  = module.eks.oidc_provider_arn
+  oidc_provider_url  = replace(module.eks.oidc_provider, "https://", "")
+}
+
 # ArgoCD GitOps Bootstrap
 module "argocd_bootstrap" {
   source                   = "./modules/argocd-bootstrap"
@@ -168,8 +177,17 @@ module "argocd_bootstrap" {
   repository_url           = var.gitops_repo_url
   target_revision          = var.target_revision
   argocd_app_manifest_path = var.argocd_app_manifest_path
-}
 
+  install_ebs_csi           = true
+  ebs_csi_controller_role_arn = module.eks_irsa_ebs.ebs_csi_controller_role_arn
+
+  depends_on = [
+    module.eks,
+    module.eks_node_role,
+    module.eks_irsa_ebs
+  ]
+
+}
 
 # Data source to fetch OIDC provider URL
 data "aws_iam_openid_connect_provider" "eks" {

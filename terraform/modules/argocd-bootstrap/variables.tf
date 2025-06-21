@@ -31,3 +31,14 @@ variable "argocd_app_manifest_path" {
   description = "Path in the Git repository where ArgoCD application manifests are located"
   type        = string
 }
+
+variable "install_ebs_csi" {
+  type    = bool
+  default = true
+  description = "Whether to install AWS EBS CSI driver and gp3 StorageClass"
+}
+
+variable "ebs_csi_controller_role_arn" {
+  type        = string
+  description = "Role ARN for the EBS CSI controller"
+}
