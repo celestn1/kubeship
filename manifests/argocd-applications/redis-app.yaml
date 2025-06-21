@@ -1,14 +1,16 @@
+# kubeship/manifests/redis-app.yaml
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: postgres-db
+  name: redis
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/celestn1/kubeship
     targetRevision: HEAD
-    path: helm-charts/postgres-db
+    path: helm-charts/redis
   destination:
     server: https://kubernetes.default.svc
     namespace: default
