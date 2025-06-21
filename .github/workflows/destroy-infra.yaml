@@ -49,7 +49,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.6
-
+            
       - name: Terraform Init
         run: |
           terraform init -upgrade \
@@ -61,19 +61,6 @@ jobs:
       - name: Configure kubeconfig
         run: |
           aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ secrets.AWS_REGION }}
-            
-      # ✅ Destroy Helm + ArgoCD-managed workloads first (depends on EKS)
-      - name: Destroy ArgoCD + Apps
-        run: terraform destroy -auto-approve -target=module.argocd-bootstrap
 
-      # ✅ Then destroy EKS cluster (depends on VPC)
-      - name: Destroy EKS Cluster
-        run: terraform destroy -auto-approve -target=module.eks
-
-      # ✅ Finally destroy the VPC and networking components
-      - name: Destroy VPC
-        run: terraform destroy -auto-approve -target=module.vpc
-
-      # ✅ Full cleanup if all partial targets are removed
-      - name: Destroy Remaining Infra
+      - name: Destroy All Infrastructure
         run: terraform destroy -auto-approve
