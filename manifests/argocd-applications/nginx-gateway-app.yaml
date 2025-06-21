@@ -12,10 +12,11 @@ spec:
     targetRevision: HEAD
     path: helm-charts/nginx-gateway
     helm:
-      values: |
-        image:
-          repository: ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.TF_PROJECT_NAME }}-nginx-gateway
-          tag:       ${{ env.IMAGE_TAG }}
+      parameters:
+        - name: image.repository
+          value: 240398787204.dkr.ecr.eu-west-2.amazonaws.com/nginx-gateway
+        - name: image.tag
+          value: latest
 
   destination:
     server: https://kubernetes.default.svc
