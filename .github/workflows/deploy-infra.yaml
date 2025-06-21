@@ -179,12 +179,21 @@ jobs:
 
       
       - name: Terraform Plan & Apply (full sync)
+        env:
+          TF_VAR_secrets_map: >-
+            {
+              "JWT_SECRET_KEY": "${{ secrets.JWT_SECRET_KEY }}",
+              "JWT_ALGORITHM": "${{ secrets.JWT_ALGORITHM }}",
+              "DATABASE_URL": "${{ secrets.DATABASE_URL }}",
+              "REDIS_URL": "${{ secrets.REDIS_URL }}"
+            }
         run: |
           terraform plan -out=tfplan-full \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
           terraform apply -auto-approve tfplan-full
+
 
       - name: Wait for ArgoCD server to be ready
         run: |
