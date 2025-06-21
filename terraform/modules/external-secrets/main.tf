@@ -12,6 +12,13 @@ resource "helm_release" "external_secrets" {
   values = [
     yamlencode({
       installCRDs = true
+      serviceAccount = {
+        create = true
+        name   = "external-secrets"
+        annotations = {
+          "eks.amazonaws.com/role-arn" = var.irsa_role_arn
+        }
+      }
       env = [
         {
           name  = "AWS_REGION"

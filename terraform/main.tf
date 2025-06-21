@@ -170,10 +170,20 @@ module "argocd_bootstrap" {
   argocd_app_manifest_path = var.argocd_app_manifest_path
 }
 
+# IRSA for External Secrets Operator
+module "irsa_external_secrets" {
+  source = "./modules/irsa-external-secrets"
+
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
+  namespace         = "external-secrets"
+}
+
 # External Secrets Operator
 module "external_secrets_resources" {
   source      = "./modules/external-secrets"
   aws_region  = var.aws_region  
   secrets_map = var.secrets_map
   namespace   = "external-secrets"
+  irsa_role_arn = module.irsa_external_secrets.iam_role_arn
 }

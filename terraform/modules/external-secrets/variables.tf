@@ -16,3 +16,8 @@ variable "namespace" {
   type        = string
   default     = "external-secrets"
 }
+
+variable "irsa_role_arn" {
+  description = "IAM Role ARN for external-secrets IRSA"
+  type        = string
+}

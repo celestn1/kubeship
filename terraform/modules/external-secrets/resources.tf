@@ -28,4 +28,7 @@ resource "kubernetes_manifest" "external_secret" {
       ]
     }
   }
+
+  depends_on = [kubernetes_manifest.cluster_secret_store]
+
 }
