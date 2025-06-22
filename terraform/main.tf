@@ -125,6 +125,17 @@ module "eks" {
   }
 }
 
+# Add this after the EKS module
+module "cert_manager" {
+  source        = "./modules/cert-manager"
+  namespace     = "cert-manager"
+  chart_version = "v1.14.4"
+
+  depends_on = [
+    module.eks
+  ]
+}
+
 # Fetch EKS endpoint & auth info
 data "aws_eks_cluster" "this" {
   name       = module.eks.cluster_name
@@ -135,7 +146,6 @@ data "aws_eks_cluster_auth" "this" {
   name       = module.eks.cluster_name
   depends_on = [module.eks]
 }
-
 
 # ECR
 module "ecr" {
