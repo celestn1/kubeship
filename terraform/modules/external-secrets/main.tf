@@ -1,5 +1,15 @@
 # kubeship/terraform/modules/external-secrets/main.tf
 
+terraform {
+  required_providers {
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.14.0"
+    }
+  }
+}
+
+
 resource "helm_release" "external_secrets" {
   name             = "external-secrets"
   namespace        = var.namespace
