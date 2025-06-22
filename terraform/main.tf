@@ -10,7 +10,11 @@ terraform {
     helm = {
       source  = "hashicorp/helm"
       version = "~> 2.7.1"
-    }    
+    }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.14.0"
+    }
   }
 }
 
@@ -18,6 +22,13 @@ provider "aws" {
   region = var.aws_region
 }
 
+# kubectl Provider
+provider "kubectl" {
+  host                   = data.aws_eks_cluster.this.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.this.token
+  load_config_file       = false
+}
 
 # Kubernetes provider configuration
 provider "kubernetes" {

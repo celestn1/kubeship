@@ -195,12 +195,15 @@ jobs:
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
           terraform apply -auto-approve tfplan-full
 
-
       - name: Wait for ArgoCD server to be ready
         run: |
           kubectl wait --for=condition=available deployment/argocd-server \
             -n argocd --timeout=300s
 
+      - name: Check ClusterSecretStore CRD exists
+        run: |
+          kubectl get crd clustersecretstores.external-secrets.io
+            
       - name: Apply ArgoCD Application manifests
         run: |
           kubectl apply -f ../manifests/argocd-applications -n argocd
@@ -218,6 +221,10 @@ jobs:
                  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
           curl -k "https://$LB/api/v1/applications?refresh=true" || true
 
+      - name: Check ClusterSecretStore CRD exists
+        run: |
+          kubectl get crd clustersecretstores.external-secrets.io
+            
       - name: Verify deployed ArgoCD apps
         run: |
           kubectl get applications -n argocd 

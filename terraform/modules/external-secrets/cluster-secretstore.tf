@@ -1,7 +1,7 @@
 # kubeship/terraform/modules/external-secrets/cluster-secretstore.tf
 
-resource "kubernetes_manifest" "cluster_secret_store" {
-  manifest = {
+resource "kubectl_manifest" "cluster_secret_store" {
+  yaml_body = yamlencode({
     apiVersion = "external-secrets.io/v1beta1"
     kind       = "ClusterSecretStore"
     metadata = {
@@ -23,9 +23,9 @@ resource "kubernetes_manifest" "cluster_secret_store" {
         }
       }
     }
-  }
+  })
 
   depends_on = [
-    null_resource.wait_for_clustersecretstore_crd
-  ]  
+    helm_release.external_secrets
+  ]
 }
