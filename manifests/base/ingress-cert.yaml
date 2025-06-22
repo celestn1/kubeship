@@ -5,8 +5,8 @@ kind: Ingress
 metadata:
   name: kubeship-ingress
   namespace: default
-  spec:
-    ingressClassName: alb
+  annotations:
+    kubernetes.io/ingress.class: alb
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   # Uncomment TLS when domain + certs are valid
@@ -15,6 +15,7 @@ spec:
   #       - kubeship.celestn.dev
   #     secretName: tls-cert
 
+  ingressClassName: alb
   rules:
     - http:
         paths:
