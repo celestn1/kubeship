@@ -182,7 +182,7 @@ jobs:
         env:
           TF_VAR_secrets_map: >-
             {
-              "/kubeship/auth": "{\"database_url\":\"${{ secrets.DATABASE_URL }}\",\"jwt_secret\":\"${{ secrets.JWT_SECRET_KEY }}\",\"redis_url\":\"${{ secrets.REDIS_URL }}\"}"
+              "/kubeship/auth": "{\"database_url\":\"${{ secrets.DATABASE_URL }}\",\"jwt_secret\":\"${{ secrets.JWT_SECRET_KEY }}\",\"jwt_algorithm\":\"${{ secrets.JWT_ALGORITHM }}\",\"redis_url\":\"${{ secrets.REDIS_URL }}\"}"
             }
               
         run: |
