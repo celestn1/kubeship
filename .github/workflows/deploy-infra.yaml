@@ -182,10 +182,7 @@ jobs:
         env:
           TF_VAR_secrets_map: >-
             {
-              "/kubeship/auth/database_url": "${{ secrets.DATABASE_URL }}",
-              "/kubeship/auth/jwt_secret": "${{ secrets.JWT_SECRET_KEY }}",
-              "/kubeship/auth/jwt_algorithm": "${{ secrets.JWT_ALGORITHM }}",
-              "/kubeship/auth/redis_url": "${{ secrets.REDIS_URL }}"
+              "/kubeship/auth": "{\"database_url\":\"${{ secrets.DATABASE_URL }}\",\"jwt_secret\":\"${{ secrets.JWT_SECRET_KEY }}\",\"redis_url\":\"${{ secrets.REDIS_URL }}\"}"
             }
               
         run: |
@@ -223,7 +220,7 @@ jobs:
         run: |
           LB=$(kubectl get svc argocd-server -n argocd \
                  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-          curl -k "https://$LB/api/v1/applications?refresh=true" || true
+          curl -k "http://$LB/api/v1/applications?refresh=true" || true
 
       - name: Check ClusterSecretStore CRD exists
         run: |
