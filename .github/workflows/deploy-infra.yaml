@@ -177,9 +177,6 @@ jobs:
         if: steps.apply.outcome == 'success'
         run: aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION}}
 
-      - name: Install External Secrets CRDs
-        run: |
-          kubectl apply -f https://github.com/external-secrets/external-secrets/releases/latest/download/crds.yaml  
       
       - name: Terraform Plan & Apply (full sync)
         env:
