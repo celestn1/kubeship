@@ -7,7 +7,6 @@ resource "kubectl_manifest" "external_secret" {
     apiVersion = "external-secrets.io/v1beta1"
     kind       = "ExternalSecret"
     metadata = {
-      # Ensure resource name is DNS compliant
       name      = lower(replace(basename(each.key), "_", "-"))
       namespace = var.namespace
       labels = {
@@ -27,9 +26,10 @@ resource "kubectl_manifest" "external_secret" {
       }
       data = [
         {
-          secretKey = upper(basename(each.key))  # e.g. JWT_SECRET_KEY
+          secretKey = upper(basename(each.key))     # e.g. JWT_SECRET_KEY
           remoteRef = {
-            key = each.key  # full path like /kubeship/auth/jwt_secret
+            key      = dirname(each.key)            # e.g. "/kubeship/auth"
+            property = basename(each.key)           # e.g. "jwt_secret"
           }
         }
       ]
