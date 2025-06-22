@@ -1,9 +1,9 @@
 # modules/external-secrets/resources.tf
 
-resource "kubernetes_manifest" "external_secret" {
+resource "kubectl_manifest" "external_secret" {
   for_each = var.secrets_map
 
-  manifest = {
+  yaml_body = yamlencode({
     apiVersion = "external-secrets.io/v1beta1"
     kind       = "ExternalSecret"
     metadata = {
@@ -21,8 +21,8 @@ resource "kubernetes_manifest" "external_secret" {
         kind = "ClusterSecretStore"
       }
       target = {
-        name            = each.key
-        creationPolicy  = "Owner"
+        name           = each.key
+        creationPolicy = "Owner"
       }
       data = [
         {
@@ -33,7 +33,7 @@ resource "kubernetes_manifest" "external_secret" {
         }
       ]
     }
-  }
+  })
 
   depends_on = [kubectl_manifest.cluster_secret_store]
 }
