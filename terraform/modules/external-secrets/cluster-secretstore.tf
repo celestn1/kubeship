@@ -24,4 +24,8 @@ resource "kubernetes_manifest" "cluster_secret_store" {
       }
     }
   }
+  
+  depends_on = [
+    helm_release.external_secrets
+  ]  
 }
