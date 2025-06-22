@@ -182,11 +182,12 @@ jobs:
         env:
           TF_VAR_secrets_map: >-
             {
-              "JWT_SECRET_KEY": "${{ secrets.JWT_SECRET_KEY }}",
-              "JWT_ALGORITHM": "${{ secrets.JWT_ALGORITHM }}",
-              "DATABASE_URL": "${{ secrets.DATABASE_URL }}",
-              "REDIS_URL": "${{ secrets.REDIS_URL }}"
+              "/kubeship/auth/database_url": "${{ secrets.DATABASE_URL }}",
+              "/kubeship/auth/jwt_secret": "${{ secrets.JWT_SECRET_KEY }}",
+              "/kubeship/auth/jwt_algorithm": "${{ secrets.JWT_ALGORITHM }}",
+              "/kubeship/auth/redis_url": "${{ secrets.REDIS_URL }}"
             }
+              
         run: |
           terraform plan -out=tfplan-full \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \

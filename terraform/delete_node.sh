@@ -38,17 +38,18 @@ if [[ -n "$ALB_ARN" && "$ALB_ARN" != "None" ]]; then
   aws elbv2 delete-load-balancer --load-balancer-arn "$ALB_ARN" --region "$REGION" || true
 fi
 
-echo "👉 4) Delete ECR repositories"
-for repo in auth-service frontend nginx-gateway; do
-  aws ecr delete-repository \
-    --repository-name "${PROJECT}-$repo" \
-    --force \
-    --region "$REGION" || true
-done
+#echo "👉 4) Delete ECR repositories"
+#for repo in auth-service frontend nginx-gateway; do
+#  aws ecr delete-repository \
+#    --repository-name "${PROJECT}-$repo" \
+#    --force \
+#    --region "$REGION" || true
+#done
 
 echo "👉 5) Delete Secrets Manager secrets tagged Project=$PROJECT"
 SECRET_ARNS=$(aws secretsmanager list-secrets \
   --filters Key=tag-key,Values=Project Key=tag-value,Values=$PROJECT \
+  --include-planned-deletion \  
   --region "$REGION" \
   --query 'SecretList[].ARN' \
   --output text 2>/dev/null || echo "")
