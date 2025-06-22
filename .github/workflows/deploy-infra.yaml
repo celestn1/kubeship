@@ -199,14 +199,18 @@ jobs:
         run: |
           kubectl wait --for=condition=available deployment/argocd-server \
             -n argocd --timeout=300s
+          
+      - name: Apply non-ArgoCD manifests
+        run: |
+          kubectl apply -f ../manifests/base/
+
+      - name: Apply ArgoCD apps
+        run: |
+          kubectl apply -f ../manifests/argocd-applications -n argocd
 
       - name: Check ClusterSecretStore CRD exists
         run: |
-          kubectl get crd clustersecretstores.external-secrets.io
-            
-      - name: Apply ArgoCD Application manifests
-        run: |
-          kubectl apply -f ../manifests/argocd-applications -n argocd
+          kubectl get crd clustersecretstores.external-secrets.io          
       
       - name: Force sync ArgoCD apps
         run: |

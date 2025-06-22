@@ -1,5 +1,4 @@
-# kubeship/manifests/ingress.yaml
-
+# kubeship/manifests/base/ingress-cert.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

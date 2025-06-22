@@ -1,4 +1,4 @@
-# kubeship/manifests/cluster-issuer.yaml
+# kubeship/manifests/base/cluster-issuer.yaml
 
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer

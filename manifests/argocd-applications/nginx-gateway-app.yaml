@@ -14,7 +14,7 @@ spec:
     helm:
       parameters:
         - name: image.repository
-          value: 240398787204.dkr.ecr.eu-west-2.amazonaws.com/nginx-gateway
+          value: 240398787204.dkr.ecr.eu-west-2.amazonaws.com/kubeship-nginx-gateway
         - name: image.tag
           value: latest
 
