@@ -7,7 +7,7 @@ resource "kubectl_manifest" "external_secret" {
     apiVersion = "external-secrets.io/v1beta1"
     kind       = "ExternalSecret"
     metadata = {
-      name      = lower(replace(each.key, "_", "-"))
+      name = lower(replace(basename(each.key), "_", "-"))
       namespace = var.namespace
       labels = {
         managed-by = "terraform"

@@ -9,6 +9,11 @@ resource "aws_iam_role" "ebs_csi_controller_role" {
     Project     = var.project_name
     Environment = var.environment
   }
+
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [assume_role_policy]
+  }  
 }
 
 data "aws_iam_policy_document" "ebs_irsa_assume_role_policy" {
