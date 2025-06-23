@@ -89,17 +89,35 @@ jobs:
 
       - name: Explicitly Delete Kubernetes Resources
         run: |
-          kubectl delete svc --all -A --ignore-not-found
-          kubectl delete pvc --all -A --ignore-not-found
-          kubectl delete ingress --all -A --ignore-not-found
-          kubectl delete deployments --all -A --ignore-not-found
-          kubectl delete statefulsets --all -A --ignore-not-found
-          kubectl delete pods --all -A --ignore-not-found
-          kubectl delete namespaces argocd external-secrets cert-manager --ignore-not-found
+          # Delete common workload types cluster-wide
+          kubectl delete svc --all -A --ignore-not-found || true
+          kubectl delete pvc --all -A --ignore-not-found || true
+          kubectl delete ingress --all -A --ignore-not-found || true
+          kubectl delete deployments --all -A --ignore-not-found || true
+          kubectl delete statefulsets --all -A --ignore-not-found || true
+          kubectl delete pods --all -A --ignore-not-found || true
 
-      - name: Wait for all pods to be deleted
+          # Patch and force-delete stuck namespaces
+          for ns in argocd external-secrets cert-manager; do
+            echo "Force-deleting namespace: $ns"
+            kubectl get namespace "$ns" -o json \
+              | jq 'del(.spec.finalizers)' \
+              | kubectl replace --raw "/api/v1/namespaces/$ns/finalize" -f - || true
+          done
+
+      - name: Wait for namespaces to terminate
         run: |
-          kubectl wait --for=delete pod --all -A --timeout=180s || true
+          for ns in argocd external-secrets cert-manager; do
+            kubectl wait --for=delete ns/$ns --timeout=90s || true
+          done
+
+      - name: Force-delete AWS Secrets Manager entries
+        run: |
+          secrets=$(aws secretsmanager list-secrets --include-planned-deletion --query "SecretList[?starts_with(Name,'/kubeship/')].Name" --output text)
+          for secret in $secrets; do
+            echo "Deleting secret: $secret"
+            aws secretsmanager delete-secret --secret-id "$secret" --force-delete-without-recovery || true
+          done          
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
