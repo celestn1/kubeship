@@ -34,7 +34,13 @@ data "aws_iam_policy_document" "alb_irsa_assume_role_policy" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "alb_controller_policy" {
+resource "aws_iam_policy" "alb_controller_policy" {
+  name   = "${var.project_name}-alb-controller-policy"
+  path   = "/"
+  policy = file("${path.module}/policy.json")
+}
+
+resource "aws_iam_role_policy_attachment" "alb_controller_policy_attachment" {
   role       = aws_iam_role.alb_controller_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSLoadBalancerControllerIAMPolicy"
+  policy_arn = aws_iam_policy.alb_controller_policy.arn
 }
