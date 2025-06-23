@@ -21,9 +21,3 @@ variable "irsa_role_arn" {
   description = "IAM Role ARN for External-Secrets IRSA"
   type        = string
 }
-
-variable "install_crds" {
-  description = "Whether to install CRDs (only true on the first install)"
-  type        = bool
-  default     = true
-}

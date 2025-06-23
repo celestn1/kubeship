@@ -225,40 +225,11 @@ module "irsa_external_secrets" {
   namespace = "external-secrets"
 }
 
-# Helm chart + CRDs only
+# External Secrets Operator
 module "external_secrets_resources" {
-  source        = "./modules/external-secrets"
-  aws_region    = var.aws_region
-  namespace     = "external-secrets"
+  source      = "./modules/external-secrets"
+  aws_region  = var.aws_region  
+  secrets_map = var.secrets_map
+  namespace   = "external-secrets"
   irsa_role_arn = module.irsa_external_secrets.iam_role_arn
-  install_crds  = true
-  secrets_map   = {}    # no sync here
-}
-
-# ExternalSecrets CR for auth-service in its own namespace
-module "external_secrets_for_auth" {
-  source        = "./modules/external-secrets"
-  aws_region    = var.aws_region
-  namespace     = "auth-service"
-  irsa_role_arn = module.irsa_external_secrets.iam_role_arn
-  install_crds  = false
-
-   # only sync the auth JSON blob
-   secrets_map = {
-     "/kubeship/auth" = var.secrets_map["/kubeship/auth"]
-   }
-}
-
-# ExternalSecrets CR for postgres-db in its own namespace
-module "external_secrets_for_postgres" {
-  source        = "./modules/external-secrets"
-  aws_region    = var.aws_region
-  namespace     = "postgres-db"
-  irsa_role_arn = module.irsa_external_secrets.iam_role_arn
-  install_crds  = false
-
-  # only sync the postgres JSON blob
-  secrets_map = {
-    "/kubeship/postgres" = var.secrets_map["/kubeship/postgres"]
-  }
 }
