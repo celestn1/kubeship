@@ -65,9 +65,15 @@ jobs:
         run: |
           kubectl delete -f ../manifests/argocd-applications -n argocd  --ignore-not-found=true   
 
-      - name: Delete non-ArgoCD manifests
+      - name: Delete non-ArgoCD manifests (skip missing CRDs)
         run: |
-          kubectl delete -f ../manifests/base/ --ignore-not-found=true
+          for file in ../manifests/base/*.yaml; do
+            if kubectl apply --dry-run=client --server-side -f "$file" > /dev/null 2>&1; then
+              kubectl delete -f "$file" --ignore-not-found=true || true
+            else
+              echo "Skipping $file: CRD not present"
+            fi
+          done
 
       - name: Explicitly Delete Kubernetes Resources
         run: |
