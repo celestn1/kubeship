@@ -63,11 +63,11 @@ jobs:
 
       - name: Delete ArgoCD apps
         run: |
-          kubectl delete -f ../manifests/argocd-applications -n argocd        
+          kubectl delete -f ../manifests/argocd-applications -n argocd  --ignore-not-found=true   
 
       - name: Delete non-ArgoCD manifests
         run: |
-          kubectl delete -f ../manifests/base/
+          kubectl delete -f ../manifests/base/ --ignore-not-found=true
 
       - name: Explicitly Delete Kubernetes Resources
         run: |
