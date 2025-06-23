@@ -5,6 +5,9 @@
 # ---- Build Stage ----
 FROM node:20-alpine AS build
 
+ARG VITE_API_URL=/v1/auth
+ENV VITE_API_URL=${VITE_API_URL}
+
 WORKDIR /app
 
 # 1. Copy package files & install deps

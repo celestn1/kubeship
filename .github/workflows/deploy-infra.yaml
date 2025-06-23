@@ -101,7 +101,7 @@ jobs:
       - name: Build & Push frontend
         if: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true' }}      
         run: |
-          docker build -t frontend:${{ env.IMAGE_TAG }} -f microservices/frontend/Dockerfile .
+          docker build --build-arg VITE_API_URL=/v1/auth -t frontend:${{ env.IMAGE_TAG }} -f microservices/frontend/Dockerfile .
           URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_2 }}
           docker tag frontend:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
           docker push $URI:${{ env.IMAGE_TAG }}
@@ -195,7 +195,7 @@ jobs:
                 "POSTGRES_DB":       "${{ secrets.POSTGRES_DB }}"
               }
             }
-                   
+
         run: |
           terraform plan -out=tfplan-full \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
