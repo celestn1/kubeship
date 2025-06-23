@@ -13,7 +13,7 @@ spec:
     path: helm-charts/postgres-db
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: postgres-db
   syncPolicy:
     automated:
       prune: true
