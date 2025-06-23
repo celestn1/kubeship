@@ -4,7 +4,7 @@ set -euo pipefail
 PROJECT=kubeship
 REGION=eu-west-2
 CLUSTER_NAME=kubeship-cluster
-NODEGROUP_NAME=default-20250617224642157900000010
+NODEGROUP_NAME=default-20250622205326194400000010
 
 echo "👉 1) Delete the EKS managed nodegroup"
 aws eks delete-nodegroup \
