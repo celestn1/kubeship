@@ -14,16 +14,25 @@ permissions:
   contents: read
 
 env:
-  REGION:                        ${{ secrets.AWS_REGION }}
-  TF_STATE_BUCKET:               ${{ secrets.TF_STATE_BUCKET }}
-  TF_LOCK_TABLE:                 ${{ secrets.TF_LOCK_TABLE }}
-  TF_VAR_project_name:           ${{ secrets.TF_PROJECT_NAME }}
-  TF_VAR_environment:            ${{ secrets.TF_ENVIRONMENT }}
-  TF_VAR_eks_cluster_name:       ${{ secrets.TF_EKS_CLUSTER_NAME }}
-  TF_VAR_gitops_repo_url:        ${{ secrets.TF_GITOPS_REPO_URL }}
-  TF_VAR_target_revision:        ${{ secrets.TF_TARGET_REVISION }}
+  # Docker/ECR
+  IMAGE_TAG:       latest
+  ECR_REPO_1:      auth-service
+  ECR_REPO_2:      frontend
+  ECR_REPO_3:      nginx-gateway
+
+  # AWS & Terraform
+  AWS_REGION:                      ${{ secrets.AWS_REGION }}
+  AWS_ACCOUNT_ID:                  ${{ secrets.AWS_ACCOUNT_ID }}
+  TF_STATE_BUCKET:                 ${{ secrets.TF_STATE_BUCKET }}
+  TF_LOCK_TABLE:                   ${{ secrets.TF_LOCK_TABLE }}
+  TF_VAR_project_name:             ${{ secrets.TF_PROJECT_NAME }}
+  TF_VAR_environment:              ${{ secrets.TF_ENVIRONMENT }}
+  TF_VAR_eks_cluster_name:         ${{ secrets.TF_EKS_CLUSTER_NAME }}
+  TF_VAR_gitops_repo_url:          ${{ secrets.TF_GITOPS_REPO_URL }}
+  TF_VAR_target_revision:          ${{ secrets.TF_TARGET_REVISION }}
   TF_VAR_argocd_app_manifest_path: ${{ secrets.TF_ARGOCD_APP_MANIFEST_PATH }}
-  TF_VAR_terraform_caller_arn:   ${{ secrets.CI_IAM_ROLE_ARN }}
+  TF_VAR_availability_zones:       '["${{ secrets.TF_AVAILABILITY_ZONE_1 }}","${{ secrets.TF_AVAILABILITY_ZONE_2 }}"]'
+  TF_VAR_terraform_caller_arn:     ${{ secrets.CI_IAM_ROLE_ARN }}
 
 jobs:
   destroy:
@@ -49,6 +58,7 @@ jobs:
         with:
           terraform_version: 1.6.6
 
+
       - name: Terraform Init
         run: |
           terraform init -upgrade \
@@ -56,5 +66,18 @@ jobs:
             -backend-config="key=infra/terraform.tfstate" \
             -backend-config="region=${REGION}" \
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
+
+      - name: Get Kubernetes config
+        run: |
+          aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION}}
+
+      - name: Apply non-ArgoCD manifests
+        run: |
+          kubectl delete -f ../manifests/base/
+
+      - name: Apply ArgoCD apps
+        run: |
+          kubectl delete -f ../manifests/argocd-applications -n argocd        
+
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
