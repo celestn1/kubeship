@@ -59,11 +59,17 @@ jobs:
 
       - name: Get Kubernetes config
         run: |
-          aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION}}
+          aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION }}
+
+      - name: Remove Helm releases explicitly
+        run: |
+          helm uninstall argocd -n argocd || true
+          helm uninstall external-secrets -n external-secrets || true
+          helm uninstall cert-manager -n cert-manager || true
 
       - name: Delete ArgoCD apps
         run: |
-          kubectl delete -f ../manifests/argocd-applications -n argocd  --ignore-not-found=true   
+          kubectl delete -f ../manifests/argocd-applications -n argocd --ignore-not-found=true
 
       - name: Delete non-ArgoCD manifests (skip missing CRDs)
         run: |
@@ -73,6 +79,12 @@ jobs:
             else
               echo "Skipping $file: CRD not present"
             fi
+          done
+
+      - name: Patch stuck namespaces (force finalizer removal)
+        run: |
+          for ns in argocd external-secrets cert-manager; do
+            kubectl get namespace "$ns" -o json | jq '.spec.finalizers = []' | kubectl replace --raw "/api/v1/namespaces/$ns/finalize" -f - || true
           done
 
       - name: Explicitly Delete Kubernetes Resources
@@ -85,11 +97,9 @@ jobs:
           kubectl delete pods --all -A --ignore-not-found
           kubectl delete namespaces argocd external-secrets cert-manager --ignore-not-found
 
-      - name: Remove Helm releases explicitly
+      - name: Wait for all pods to be deleted
         run: |
-          helm uninstall argocd -n argocd || true
-          helm uninstall external-secrets -n external-secrets || true
-          helm uninstall cert-manager -n cert-manager || true
+          kubectl wait --for=delete pod --all -A --timeout=180s || true
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
