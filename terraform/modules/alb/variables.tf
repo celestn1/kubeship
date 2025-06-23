@@ -14,3 +14,13 @@ variable "public_subnet_ids" {
   description = "List of public subnet IDs for the ALB"
   type        = list(string)
 }
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+}
+
+variable "cluster_name" {
+  description = "EKS Cluster name"
+  type        = string
+}
