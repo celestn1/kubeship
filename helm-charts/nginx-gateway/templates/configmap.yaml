@@ -15,7 +15,7 @@ data:
         keepalive_timeout  65;
 
         upstream auth_service {
-            server auth-service:8001;
+            server auth-service.auth-service.svc.cluster.local:8001;
         }
 
         server {
