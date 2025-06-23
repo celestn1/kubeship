@@ -30,6 +30,11 @@ data:
                 client_max_body_size 1M;
             }
 
+            # Health check endpoint for probes
+            location /health {
+                return 200 '{"status":"ok"}';
+                add_header Content-Type application/json;
+
             location / {
                 return 404 '{"error":"Not Found"}';
                 add_header Content-Type application/json;
