@@ -1,21 +1,33 @@
 # kubeship/microservices/frontend/Dockerfile
 # Added to test docker image push 9
-FROM node:20-alpine
+
+
+# ---- Build Stage ----
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# 1) Copy just the package files and install deps
+# 1. Copy package files & install deps
 COPY microservices/frontend/package*.json ./
 RUN npm ci
 
-# 2) Bring in your shared code from shared directory
+# 2. Copy shared code
 COPY shared/ ./shared
 
-# 3) Copy the rest of the frontend
+# 3. Copy frontend code
 COPY microservices/frontend/ ./
 
-# 4) Build
+# 4. Build static site
 RUN npm run build
 
-EXPOSE 3000
-CMD ["npm", "run", "preview"]
+# ---- Production Stage ----
+FROM nginx:alpine
+
+# 5. Copy built frontend to NGINX public dir
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# 6. Optional: Custom nginx.conf for fallback routing
+COPY microservices/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
