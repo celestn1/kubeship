@@ -1,13 +1,14 @@
 # kubeship/helm-charts/postgres-db/templates/service.yaml
-
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-db
+  name: {{ include "postgres-db.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: postgres-db
 spec:
-  type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
+    - port: 5432
       targetPort: 5432
   selector:
     app: postgres-db

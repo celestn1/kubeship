@@ -1,41 +1,38 @@
 # kubeship/helm-charts/postgres-db/templates/statefulset.yaml
-
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: postgres-db
+  name: {{ include "postgres-db.fullname" . }}
+  namespace: {{ .Release.Namespace }}
 spec:
+  serviceName: {{ include "postgres-db.fullname" . }}
+  replicas: 1
   selector:
     matchLabels:
       app: postgres-db
-  serviceName: "postgres-db"
-  replicas: {{ .Values.replicaCount }}
+      statefulset.kubernetes.io/pod-name: {{ include "postgres-db.fullname" . }}
   template:
     metadata:
       labels:
         app: postgres-db
     spec:
+      serviceAccountName: {{ include "postgres-db.fullname" . }}-sa
       containers:
         - name: postgres
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 5432
           envFrom:
             - secretRef:
                 name: postgres-secret
-          env:
-            - name: PGDATA
-              value: /var/lib/postgresql/data/pgdata                
           volumeMounts:
-            - name: postgres-storage
+            - name: data
               mountPath: /var/lib/postgresql/data
   volumeClaimTemplates:
     - metadata:
-        name: postgres-storage
+        name: data
       spec:
-        accessModes: [ {{ .Values.persistence.accessMode }} ]
-        storageClassName: {{ .Values.persistence.storageClass }}
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: {{ .Values.persistence.size }}

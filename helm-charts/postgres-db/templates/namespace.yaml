@@ -1,0 +1,26 @@
+# kubeship/helm-charts/postgres-db/templates/namespace.yaml
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}        # will be "postgres-db" if you install with --namespace postgres-db
+  labels:
+    app: postgres-db
+---
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: aws-secrets
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: postgres-db
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: eu-west-2
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: {{ include "postgres-db.fullname" . }}-sa
+            namespace: {{ .Release.Namespace }}

@@ -61,8 +61,8 @@ variable "terraform_caller_arn" {
 }
 
 variable "secrets_map" {
-  description = "Map of secret names to values for AWS Secrets Manager"
-  type        = map(string)
+  description = "Map of AWS Secret names to a map of key→value pairs for the secrets module"
+  type        = map(map(string))
   default     = {}
 }
 

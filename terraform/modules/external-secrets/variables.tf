@@ -1,23 +1,23 @@
-# modules/external-secrets/variables.tf
+// kubeship/terraform/modules/external-secrets/variables.tf
+
 variable "aws_region" {
-  description = "AWS region"
-  type 				= string
-  default     = "eu-west-2"    
+  description = "AWS region for the External-Secrets Operator"
+  type        = string
 }
 
 variable "secrets_map" {
-  description = "Map of runtime secrets injected dynamically from CI"	
-  type = map(string)
-  default     = {}	
+  description = "Map of AWS Secret names to a map of key→value pairs"
+  type        = map(map(string))
+  default     = {}
 }
 
 variable "namespace" {
-  description = "Namespace to install External Secrets"
+  description = "Namespace to install External-Secrets into"
   type        = string
   default     = "external-secrets"
 }
 
 variable "irsa_role_arn" {
-  description = "IAM Role ARN for external-secrets IRSA"
+  description = "IAM Role ARN for External-Secrets IRSA"
   type        = string
 }

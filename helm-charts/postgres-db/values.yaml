@@ -11,11 +11,6 @@ service:
   type: ClusterIP
   port: 5432
 
-postgres:
-  user: postgres
-  password: f3412f25d6baebf
-  database: auth_db
-
 persistence:
   enabled: true
   accessMode: ReadWriteOnce

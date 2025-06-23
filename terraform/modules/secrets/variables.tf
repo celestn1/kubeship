@@ -11,18 +11,18 @@ variable "environment" {
 }
 
 variable "tags" {
-  type        = map(string)
   description = "Common tags to apply to all secrets"
-  default     = {}
-}
-
-variable "secrets_map" {
-  description = "Map of secret names to values"
   type        = map(string)
+  default     = {}
 }
 
 variable "aws_region" {
   description = "The AWS region where secrets will be stored"
   type        = string
   default     = "eu-west-2"
+}
+
+variable "secrets_map" {
+  description = "Map of secret names to a map of key→value pairs"
+  type        = map(map(string))
 }

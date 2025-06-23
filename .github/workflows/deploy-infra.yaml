@@ -180,9 +180,22 @@ jobs:
       
       - name: Terraform Plan & Apply (full sync)
         env:
-          TF_VAR_secrets_map: >-
-            {"/kubeship/auth":"{\"DATABASE_URL\":\"${{ secrets.DATABASE_URL }}\",\"JWT_SECRET_KEY\":\"${{ secrets.JWT_SECRET_KEY }}\",\"JWT_ALGORITHM\":\"${{ secrets.JWT_ALGORITHM }}\",\"REDIS_URL\":\"${{ secrets.REDIS_URL }}\"}"}
-              
+          # pass a real nested map, not a JSON-escaped string
+          TF_VAR_secrets_map: |
+            {
+              "/kubeship/auth": {
+                "DATABASE_URL":    "${{ secrets.DATABASE_URL }}",
+                "JWT_SECRET_KEY":  "${{ secrets.JWT_SECRET_KEY }}",
+                "JWT_ALGORITHM":   "${{ secrets.JWT_ALGORITHM }}",
+                "REDIS_URL":       "${{ secrets.REDIS_URL }}"
+              },
+              "/kubeship/postgres": {
+                "POSTGRES_USER":     "${{ secrets.POSTGRES_USER }}",
+                "POSTGRES_PASSWORD": "${{ secrets.POSTGRES_PASSWORD }}",
+                "POSTGRES_DB":       "${{ secrets.POSTGRES_DB }}"
+              }
+            }
+                   
         run: |
           terraform plan -out=tfplan-full \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
