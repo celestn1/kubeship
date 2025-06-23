@@ -27,6 +27,10 @@ resource "aws_subnet" "public" {
     "kubernetes.io/cluster/${var.cluster_name}"    = "shared"
     "kubernetes.io/role/elb"                       = "1"
   }
+
+  depends_on = [
+    aws_nat_gateway.this # ensure NAT is deleted before public subnet
+  ]  
 }
 
 # Private subnets with EKS tags
@@ -52,6 +56,11 @@ resource "aws_internet_gateway" "igw" {
     Name    = "${var.project_name}-igw"
     Project = var.project_name
   }
+
+  depends_on = [
+    aws_nat_gateway.this,  # ensure NAT Gateway is destroyed first
+    aws_route_table.public # ensure public route table removed first
+  ]
 }
 
 # Elastic IP for NAT
@@ -75,7 +84,8 @@ resource "aws_nat_gateway" "this" {
   }
 
   depends_on = [
-    aws_internet_gateway.igw
+    aws_internet_gateway.igw,
+    aws_eip.nat
   ]
 }
 

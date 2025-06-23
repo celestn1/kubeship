@@ -67,7 +67,14 @@ jobs:
 
       - name: Delete non-ArgoCD manifests
         run: |
-          kubectl delete -f ../manifests/base/          
+          kubectl delete -f ../manifests/base/
 
+      - name: Remove Helm releases explicitly
+        run: |
+          helm uninstall argocd -n argocd || true
+          helm uninstall external-secrets -n external-secrets || true
+          helm uninstall cert-manager -n cert-manager || true
+          kubectl delete namespace argocd external-secrets cert-manager --ignore-not-found
+          
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
