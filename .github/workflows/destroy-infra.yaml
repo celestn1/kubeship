@@ -69,12 +69,21 @@ jobs:
         run: |
           kubectl delete -f ../manifests/base/
 
+      - name: Explicitly Delete Kubernetes Resources
+        run: |
+          kubectl delete svc --all -A --ignore-not-found
+          kubectl delete pvc --all -A --ignore-not-found
+          kubectl delete ingress --all -A --ignore-not-found
+          kubectl delete deployments --all -A --ignore-not-found
+          kubectl delete statefulsets --all -A --ignore-not-found
+          kubectl delete pods --all -A --ignore-not-found
+          kubectl delete namespaces argocd external-secrets cert-manager --ignore-not-found
+
       - name: Remove Helm releases explicitly
         run: |
           helm uninstall argocd -n argocd || true
           helm uninstall external-secrets -n external-secrets || true
           helm uninstall cert-manager -n cert-manager || true
-          kubectl delete namespace argocd external-secrets cert-manager --ignore-not-found
-          
+
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
