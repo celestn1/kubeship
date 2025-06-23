@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-
+    base: '/', // Important for NGINX to resolve assets correctly
     resolve: {
       alias: {
         // Alias '@shared' to the shared directory that was copied into /app/shared
