@@ -16,3 +16,5 @@ persistence:
   accessMode: ReadWriteOnce
   size: 5Gi
   storageClass: gp3
+
+fullnameOverride: postgres-db

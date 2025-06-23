@@ -12,29 +12,4 @@ service:
   port: 8001
   targetPort: 8001
 
-env:
-  - name: DATABASE_URL
-    valueFrom:
-      secretKeyRef:
-        name: auth-db-secret
-        key: DATABASE_URL
-
-  - name: JWT_SECRET_KEY
-    valueFrom:
-      secretKeyRef:
-        name: auth-secret
-        key: JWT_SECRET_KEY
-
-  - name: JWT_ALGORITHM
-    valueFrom:
-      secretKeyRef:
-        name: auth-secret
-        key: JWT_ALGORITHM
-
-  - name: REDIS_URL
-    valueFrom:
-      secretKeyRef:
-        name: auth-secret
-        key: REDIS_URL
-
 fullnameOverride: auth-service

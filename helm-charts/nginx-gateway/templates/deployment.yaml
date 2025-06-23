@@ -20,6 +20,18 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.targetPort }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 30
           volumeMounts:
             - name: config
               mountPath: /etc/nginx/nginx.conf
