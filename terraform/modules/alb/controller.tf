@@ -9,7 +9,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   set {
     name  = "clusterName"
-    value = data.aws_eks_cluster.this.name
+    value = var.cluster_name
   }
 
   set {
