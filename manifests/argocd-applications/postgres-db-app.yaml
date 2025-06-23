@@ -11,6 +11,9 @@ spec:
     repoURL: https://github.com/celestn1/kubeship
     targetRevision: HEAD
     path: helm-charts/postgres-db
+    helm:
+      releaseName: postgres-db
+      namespace: postgres-db    
   destination:
     server: https://kubernetes.default.svc
     namespace: postgres-db
