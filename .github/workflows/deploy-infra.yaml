@@ -180,9 +180,14 @@ jobs:
       
       - name: Terraform Plan & Apply (full sync)
         env:
-          TF_VAR_secrets_map: >-
+          TF_VAR_secrets_map: |
             {
-              "/kubeship/auth": "{\"database_url\":\"${{ secrets.DATABASE_URL }}\",\"jwt_secret\":\"${{ secrets.JWT_SECRET_KEY }}\",\"jwt_algorithm\":\"${{ secrets.JWT_ALGORITHM }}\",\"redis_url\":\"${{ secrets.REDIS_URL }}\"}"
+              "/kubeship/auth": "{\
+              \"DATABASE_URL\":\"${{ secrets.DATABASE_URL }}\",\
+              \"JWT_SECRET_KEY\":\"${{ secrets.JWT_SECRET_KEY }}\",\
+              \"JWT_ALGORITHM\":\"${{ secrets.JWT_ALGORITHM }}\",\
+              \"REDIS_URL\":\"${{ secrets.REDIS_URL }}\"\
+              }"
             }
               
         run: |

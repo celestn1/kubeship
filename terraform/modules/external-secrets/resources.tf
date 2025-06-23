@@ -7,7 +7,7 @@ resource "kubectl_manifest" "external_secret" {
     apiVersion = "external-secrets.io/v1beta1"
     kind       = "ExternalSecret"
     metadata = {
-      name      = lower(replace(basename(each.key), "_", "-"))
+      name      = lower(replace(basename(each.key), "_", "-"))  # e.g. "auth"
       namespace = var.namespace
       labels = {
         managed-by = "terraform"
@@ -21,15 +21,13 @@ resource "kubectl_manifest" "external_secret" {
         kind = "ClusterSecretStore"
       }
       target = {
-        name           = lower(replace(basename(each.key), "_", "-"))
+        name           = lower(replace(basename(each.key), "_", "-"))  # same as metadata.name
         creationPolicy = "Owner"
       }
-      data = [
+      dataFrom = [
         {
-          secretKey = upper(basename(each.key))     # e.g. JWT_SECRET_KEY
-          remoteRef = {
-            key      = dirname(each.key)            # e.g. "/kubeship/auth"
-            property = basename(each.key)           # e.g. "jwt_secret"
+          extract = {
+            key = each.key  # full path to the JSON secret, e.g. "/kubeship/auth"
           }
         }
       ]
