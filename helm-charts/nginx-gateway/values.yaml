@@ -2,6 +2,8 @@
 
 replicaCount: 1
 
+namespace: nginx-gateway
+
 image:
   repository: ""
   tag: "latest"
@@ -11,3 +13,5 @@ service:
   type: LoadBalancer
   port: 80
   targetPort: 80
+
+fullnameOverride: nginx-gateway

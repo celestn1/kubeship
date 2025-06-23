@@ -17,10 +17,12 @@ spec:
           value: 240398787204.dkr.ecr.eu-west-2.amazonaws.com/kubeship-nginx-gateway
         - name: image.tag
           value: latest
+        - name: namespace
+          value: nginx-gateway          
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: nginx-gateway
   syncPolicy:
     automated:
       prune: true
