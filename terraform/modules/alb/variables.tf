@@ -1,11 +1,16 @@
-// kubeship/terraform/modules/alb/outputs.tf
+// kubeship/terraform/modules/alb/variables.tf
 
-output "alb_arn" {
-  value       = aws_lb.this.arn
-  description = "ARN of the Application Load Balancer"
+variable "project_name" {
+  description = "Name of the project"
+  type        = string
 }
 
-output "alb_dns_name" {
-  value       = aws_lb.this.dns_name
-  description = "DNS name of the Application Load Balancer"
+variable "vpc_id" {
+  description = "ID of the VPC"
+  type        = string
+}
+
+variable "public_subnet_ids" {
+  description = "List of public subnet IDs for the ALB"
+  type        = list(string)
 }
