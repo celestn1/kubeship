@@ -12,8 +12,6 @@ spec:
     targetRevision: main
     path: helm-charts/auth-service
     helm:
-      releaseName: auth-service
-      namespace: auth-service    
       parameters:
         - name: image.repository
           value: 240398787204.dkr.ecr.eu-west-2.amazonaws.com/kubeship-auth-service
