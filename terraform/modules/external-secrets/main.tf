@@ -21,7 +21,7 @@ resource "helm_release" "external_secrets" {
 
   values = [
     yamlencode({
-      installCRDs = true
+      installCRDs = var.install_crds
       serviceAccount = {
         create = true
         name   = "external-secrets"
