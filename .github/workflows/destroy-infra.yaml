@@ -81,36 +81,6 @@ jobs:
             fi
           done
 
-      - name: Patch stuck namespaces (force finalizer removal)
-        run: |
-          for ns in argocd external-secrets cert-manager; do
-            kubectl get namespace "$ns" -o json | jq '.spec.finalizers = []' | kubectl replace --raw "/api/v1/namespaces/$ns/finalize" -f - || true
-          done
-
-      - name: Explicitly Delete Kubernetes Resources
-        run: |
-          # Delete common workload types cluster-wide
-          kubectl delete svc --all -A --ignore-not-found || true
-          kubectl delete pvc --all -A --ignore-not-found || true
-          kubectl delete ingress --all -A --ignore-not-found || true
-          kubectl delete deployments --all -A --ignore-not-found || true
-          kubectl delete statefulsets --all -A --ignore-not-found || true
-          kubectl delete pods --all -A --ignore-not-found || true
-
-          # Patch and force-delete stuck namespaces
-          for ns in argocd external-secrets cert-manager; do
-            echo "Force-deleting namespace: $ns"
-            kubectl get namespace "$ns" -o json \
-              | jq 'del(.spec.finalizers)' \
-              | kubectl replace --raw "/api/v1/namespaces/$ns/finalize" -f - || true
-          done
-
-      - name: Wait for namespaces to terminate
-        run: |
-          for ns in argocd external-secrets cert-manager; do
-            kubectl wait --for=delete ns/$ns --timeout=90s || true
-          done
-
       - name: Force-delete AWS Secrets Manager entries
         run: |
           secrets=$(aws secretsmanager list-secrets --include-planned-deletion --query "SecretList[?starts_with(Name,'/kubeship/')].Name" --output text)
