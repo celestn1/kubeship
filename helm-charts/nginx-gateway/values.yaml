@@ -3,7 +3,7 @@
 replicaCount: 1
 
 image:
-  repository: "240398787204.dkr.ecr.eu-west-2.amazonaws.com/kubeship-nginx-gateway"
+  repository: ""
   tag: "latest"
   pullPolicy: IfNotPresent
 
