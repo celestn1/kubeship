@@ -56,6 +56,15 @@ module "vpc" {
   cluster_name       = var.eks_cluster_name
 }
 
+# EKS IRSA for ALB Ingress Controller
+module "eks_irsa_alb" {
+  source            = "./modules/eks-irsa-alb"
+  project_name      = var.project_name
+  environment       = var.environment
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = replace(module.eks.oidc_provider, "https://", "")
+}
+
 # ALB
 module "alb" {
   source            = "./modules/alb"
@@ -64,6 +73,7 @@ module "alb" {
   public_subnet_ids = module.vpc.public_subnet_ids
   aws_region        = var.aws_region
   cluster_name      = var.eks_cluster_name
+  alb_controller_role_arn = module.eks_irsa_alb.alb_controller_role_arn
 }
 
 # EKS cluster provisioning (registry module)

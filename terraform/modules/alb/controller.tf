@@ -1,5 +1,17 @@
 # kubeship/terraform/modules/alb/controller.tf
 
+resource "kubernetes_service_account" "alb_controller" {
+  metadata {
+    name      = "aws-load-balancer-controller"
+    namespace = "kube-system"
+
+    annotations = {
+      "eks.amazonaws.com/role-arn" = var.alb_controller_role_arn
+    }
+  }
+}
+
+
 resource "helm_release" "aws_load_balancer_controller" {
   name       = "aws-load-balancer-controller"
   namespace  = "kube-system"
@@ -24,13 +36,13 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   set {
     name  = "serviceAccount.create"
-    value = "true"
+    value = "false"
   }
 
-#  set {
-#    name  = "serviceAccount.name"
-#    value = "aws-load-balancer-controller"
-#  }
+  set {
+    name  = "serviceAccount.name"
+    value = "aws-load-balancer-controller"
+  }
 
   set {
     name  = "image.repository"
@@ -38,6 +50,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   }
 
   depends_on = [
+    kubernetes_service_account.alb_controller,
     aws_lb.this
   ]
 }
