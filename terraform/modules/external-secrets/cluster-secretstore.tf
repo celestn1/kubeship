@@ -7,7 +7,7 @@ i=1
 while [ $i -le 12 ]; do
   kubectl get crd clustersecretstores.external-secrets.io && exit 0
   echo "Waiting for ClusterSecretStore CRD..."
-  sleep 5
+  sleep 30
   i=$((i+1))
 done
 exit 1
