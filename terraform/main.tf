@@ -54,6 +54,11 @@ module "vpc" {
   vpc_cidr_block     = var.vpc_cidr_block
   availability_zones = var.availability_zones
   cluster_name       = var.eks_cluster_name
+
+  #Test Single Nat Gateway
+  enable_nat_gateway     = true
+  single_nat_gateway     = true
+  one_nat_gateway_per_az = false
 }
 
 # EKS IRSA for ALB Ingress Controller
@@ -65,16 +70,15 @@ module "eks_irsa_alb" {
   oidc_provider_url = replace(module.eks.oidc_provider, "https://", "")
 }
 
-# ALB
-module "alb" {
-  source            = "./modules/alb"
-  project_name      = var.project_name
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids
-  aws_region        = var.aws_region
-  cluster_name      = var.eks_cluster_name
-  alb_controller_role_arn = module.eks_irsa_alb.alb_controller_role_arn
+# ALB Controller for EKS
+module "alb_controller" {
+  source                   = "./modules/alb-controller"
+  eks_cluster_name         = var.eks_cluster_name
+  aws_region               = var.aws_region
+  vpc_id                   = module.vpc.vpc_id
+  alb_controller_role_arn  = module.eks_irsa_alb.alb_controller_role_arn
 }
+
 
 # EKS cluster provisioning (registry module)
 module "eks_node_role" {
@@ -121,8 +125,8 @@ module "eks" {
   # Bring your own worker nodes
   eks_managed_node_groups = {
     default = {
-      desired_size   = 2
-      min_size       = 2
+      desired_size   = 1
+      min_size       = 1
       max_size       = 4
       instance_types = ["t3.medium"]
       iam_role_arn   = module.eks_node_role.iam_role_arn
@@ -175,6 +179,12 @@ module "cloudwatch" {
   cluster_name = var.eks_cluster_name
 }
 
+# Lookup the ALB created by the ALB Controller
+data "aws_lb" "kubeship" {
+  name = "${var.project_name}-alb"
+}
+
+
 # WAF
 module "waf" {
   source       = "./modules/waf"
@@ -182,7 +192,9 @@ module "waf" {
   description  = "WAF for kubeship ingress"
   project_name = var.project_name
   environment  = var.environment
-  alb_arn      = module.alb.alb_arn
+
+  # point at the LB the controller created
+  alb_arn = data.aws_lb.kubeship.arn
 }
 
 # Secrets Manager

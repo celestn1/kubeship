@@ -1,4 +1,4 @@
-# kubeship/terraform/modules/alb/controller.tf
+# kubeship/terraform/modules/alb-controller/main.tf
 
 resource "kubernetes_service_account" "alb_controller" {
   metadata {
@@ -11,17 +11,16 @@ resource "kubernetes_service_account" "alb_controller" {
   }
 }
 
-
 resource "helm_release" "aws_load_balancer_controller" {
   name       = "aws-load-balancer-controller"
   namespace  = "kube-system"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
-  version    = "1.7.1"
+  version    = "1.13.3"
 
   set {
     name  = "clusterName"
-    value = var.cluster_name
+    value = var.eks_cluster_name
   }
 
   set {
@@ -34,14 +33,16 @@ resource "helm_release" "aws_load_balancer_controller" {
     value = var.vpc_id
   }
 
+  # Tell the chart not to create its own SA
   set {
     name  = "serviceAccount.create"
     value = "false"
   }
 
+  # Bind to our existing, annotated SA
   set {
     name  = "serviceAccount.name"
-    value = "aws-load-balancer-controller"
+    value = kubernetes_service_account.alb_controller.metadata[0].name
   }
 
   set {
@@ -50,7 +51,6 @@ resource "helm_release" "aws_load_balancer_controller" {
   }
 
   depends_on = [
-    kubernetes_service_account.alb_controller,
-    aws_lb.this
+    kubernetes_service_account.alb_controller
   ]
 }

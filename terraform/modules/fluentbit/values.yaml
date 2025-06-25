@@ -1,8 +1,12 @@
+# kubeship/terraform/modules/fluentbit/values.yaml
+
 cloudWatch:
   enabled: true
   logGroupName: /eks/kubeship/app-logs
   region: eu-west-2
   logStreamPrefix: from-fluentbit
+  autoCreateGroup: false
+  retryLimit: 1
 
 firehose:
   enabled: false
@@ -16,3 +20,20 @@ kinesis:
 serviceAccount:
   create: false
   name: fluent-bit-sa
+
+filters:
+  - name: kubernetes
+    match: kube.*
+    kube_tag_prefix: kube.var.log.containers.
+    labels: true
+    annotations: true
+
+  - name: grep
+    match: kube.*
+    regex: log
+    exclude: ".*(livenessProbe|readinessProbe).*"
+
+  - name: grep
+    match: kube.*
+    regex: namespace
+    exclude: "^(kube-system|default|amazon-cloudwatch)$"

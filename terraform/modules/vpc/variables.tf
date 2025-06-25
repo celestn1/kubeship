@@ -25,3 +25,22 @@ variable "cluster_name" {
   description = "EKS cluster name (used for subnet tagging)"
   type        = string
 }
+
+# ===================================== Single NAT Gateway Configuration =====================================
+variable "enable_nat_gateway" {
+  description = "Enable NAT Gateway for outbound internet access"
+  type        = bool
+  default     = false
+}
+
+variable "single_nat_gateway" {
+  description = "Create a single shared NAT Gateway across all AZs"
+  type        = bool
+  default     = false
+}
+
+variable "one_nat_gateway_per_az" {
+  description = "Create one NAT Gateway per AZ"
+  type        = bool
+  default     = true
+}

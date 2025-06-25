@@ -36,8 +36,7 @@ data "aws_iam_policy_document" "alb_irsa_assume_role_policy" {
 
 resource "aws_iam_policy" "alb_controller_policy" {
   name   = "${var.project_name}-alb-controller-policy"
-  path   = "/"
-  policy = file("${path.module}/policy.json")
+  policy = file("${path.module}/../iam/AWSLoadBalancerControllerPolicy.json")
 }
 
 resource "aws_iam_role_policy_attachment" "alb_controller_policy_attachment" {

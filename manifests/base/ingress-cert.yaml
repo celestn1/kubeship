@@ -9,19 +9,19 @@ metadata:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
     alb.ingress.kubernetes.io/load-balancer-name: kubeship-alb
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  # TLS config (uncomment after validating DNS and cert-manager)
-  # tls:
-  #   - hosts:
-  #       - kubeship.celestn.dev
-  #     secretName: tls-cert
+  tls:
+    - hosts:
+        - kubeship.celestn.com
+      secretName: tls-cert
 
   ingressClassName: alb
   rules:
-    - http:
+    - host: kubeship.celestn.com
+      http:
         paths:
           - path: /
             pathType: Prefix

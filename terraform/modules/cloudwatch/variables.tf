@@ -13,7 +13,7 @@ variable "project_name" {
 variable "retention_in_days" {
   description = "Number of days to retain CloudWatch logs"
   type        = number
-  default     = 7
+  default     = 1
 }
 
 variable "environment" {
