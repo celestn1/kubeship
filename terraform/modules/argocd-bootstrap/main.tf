@@ -1,12 +1,24 @@
 // kubeship/terraform/modules/argocd-bootstrap/main.tf
 
-// Ensure namespace exists before installing ArgoCD
+// 1) Ensure namespace exists
 resource "kubernetes_namespace" "argocd" {
   metadata {
     name = var.argocd_namespace
   }
 }
 
+// 2) Pre-create the ServiceAccount with IRSA annotation
+resource "kubernetes_service_account" "argocd_server" {
+  metadata {
+    name      = "argocd-server"
+    namespace = var.argocd_namespace
+    annotations = {
+      "eks.amazonaws.com/role-arn" = var.argocd_server_role_arn
+    }
+  }
+}
+
+// 3) Install (or upgrade) ArgoCD via Helm, but don’t recreate the SA
 resource "helm_release" "argocd" {
   name             = "argocd"
   namespace        = var.argocd_namespace
@@ -14,10 +26,9 @@ resource "helm_release" "argocd" {
   chart            = "argo-cd"
   version          = var.argocd_chart_version
   create_namespace = false
-  
-  timeout = 1200
-  wait    = true
-  atomic  = false
+  timeout          = 1200
+  wait             = true
+  atomic           = false
 
   values = [
     yamlencode(
@@ -26,11 +37,9 @@ resource "helm_release" "argocd" {
         {
           server = {
             serviceAccount = {
-              create      = false
-              name        = "argocd-server"
-              annotations = {
-                "eks.amazonaws.com/role-arn" = var.argocd_server_role_arn
-              }
+              create = false
+              # Reference the pre-created SA
+              name   = kubernetes_service_account.argocd_server.metadata[0].name
             }
           }
         }
@@ -38,8 +47,9 @@ resource "helm_release" "argocd" {
     )
   ]
 
-  depends_on = [ 
-    kubernetes_namespace.argocd, 
+  depends_on = [
+    kubernetes_namespace.argocd,
+    kubernetes_service_account.argocd_server,
   ]
 }
 
