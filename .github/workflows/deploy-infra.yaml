@@ -200,7 +200,7 @@ jobs:
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
-      - name: Terraform Apply (remaining infra)
+      - name: Terraform Apply (Full Infra)
         run: terraform apply -auto-approve tfplan-full
 
       # 6. Wait for ArgoCD server to be ready
