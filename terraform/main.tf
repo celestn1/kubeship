@@ -42,7 +42,16 @@ provider "helm" {
   kubernetes {
     host                   = data.aws_eks_cluster.this.endpoint
     cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.this.token
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = [
+        "eks", "get-token",
+        "--cluster-name", module.eks.cluster_name,
+        "--region", var.aws_region
+      ]
+    }
   }
 }
 
@@ -235,7 +244,6 @@ module "argocd_bootstrap" {
     module.eks_irsa_ebs,
     module.alb_controller
   ]
-
 }
 
 # Data source to fetch OIDC provider URL
