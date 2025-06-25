@@ -179,8 +179,9 @@ jobs:
           kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=180s
 
       # 5. Apply the rest of the infra (all modules)
-      - name: Terraform Plan (Full Infra)
+      - name: Terraform Plan & Apply (full sync)
         env:
+          
           TF_VAR_secrets_map: |
             {
               "/kubeship/auth": {
@@ -200,13 +201,8 @@ jobs:
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
+          terraform apply -auto-approve tfplan-full
 
-      - name: Terraform Apply (first pass)
-        run: terraform apply -auto-approve
-        continue-on-error: true
-
-      - name: Terraform Apply (second pass)
-        run: terraform apply -auto-approve
 
       # 6. Wait for ArgoCD server to be ready
       - name: Wait for ArgoCD server to be ready
