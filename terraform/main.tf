@@ -125,8 +125,8 @@ module "eks" {
   # Bring your own worker nodes
   eks_managed_node_groups = {
     default = {
-      desired_size   = 1
-      min_size       = 1
+      desired_size   = 2
+      min_size       = 2
       max_size       = 4
       instance_types = ["t3.medium"]
       iam_role_arn   = module.eks_node_role.iam_role_arn
@@ -225,7 +225,6 @@ module "argocd_bootstrap" {
     module.alb_controller,
     module.cert_manager,
     module.external_secrets_resources,
-    module.eks_irsa_ebs,
   ]
 
 }
