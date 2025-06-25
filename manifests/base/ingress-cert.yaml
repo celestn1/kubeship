@@ -12,7 +12,7 @@ metadata:
     alb.ingress.kubernetes.io/load-balancer-name: kubeship-alb
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
     cert-manager.io/cluster-issuer: letsencrypt-prod
-#    alb.ingress.kubernetes.io/wafv2-acl-arn: "${module.waf.web_acl_arn}"
+    alb.ingress.kubernetes.io/wafv2-acl-arn: "${module.waf.web_acl_arn}"
 spec:
 #  tls:
 #    - hosts:
