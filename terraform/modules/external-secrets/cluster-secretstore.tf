@@ -4,7 +4,7 @@ resource "kubectl_manifest" "cluster_secret_store" {
   apply_only = true
 
   yaml_body = yamlencode({
-    apiVersion = "external-secrets.io/v1beta1"
+    apiVersion = "external-secrets.io/v1"
     kind       = "ClusterSecretStore"
     metadata = {
       name = "aws-secrets"
