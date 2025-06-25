@@ -156,24 +156,35 @@ jobs:
 
       # 2. EKS
       - name: Terraform Plan (EKS only)
+        id: plan
         run: |
-          terraform plan -target=module.eks -out=tfplan-eks \
+          terraform plan -target=module.eks -out=tfplan-cluster \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
+        continue-on-error: true
+
+      - name: Terraform plan status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
       - name: Terraform Apply (EKS only)
-        run: terraform apply -auto-approve -input=false tfplan-eks
+        id: apply
+        run: terraform apply -auto-approve -input=false -parallelism=1 tfplan-cluster
+
+      # 4. Wait for AWS Load Balancer Controller webhook to be ready
+      - name: Get Kubernetes config
+        id: getconfig
+        if: steps.apply.outcome == 'success'
+        run: aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION }}
+
 
       # 3. ALB Controller
       - name: Terraform Plan (ALB Controller only)
         run: terraform plan -target=module.alb_controller -out=tfplan-alb
       - name: Terraform Apply (ALB Controller only)
         run: terraform apply -auto-approve tfplan-alb
-
-      # 4. Wait for AWS Load Balancer Controller webhook to be ready
-      - name: Get Kubernetes config
-        run: aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION }}
-
+                
       - name: Wait for AWS Load Balancer Controller deployment
         run: |
           kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=180s
