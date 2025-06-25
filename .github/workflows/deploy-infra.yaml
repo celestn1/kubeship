@@ -202,6 +202,8 @@ jobs:
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
       - name: Terraform Apply (first pass)
         run: terraform apply -auto-approve tfplan-full
+        continue-on-error: true
+        
       - name: Terraform Apply (second pass)
         run: terraform apply -auto-approve tfplan-full
 
