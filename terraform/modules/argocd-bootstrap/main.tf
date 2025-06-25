@@ -36,9 +36,10 @@ resource "helm_release" "argocd" {
         yamldecode(file("${path.module}/values.yaml")),
         {
           server = {
+            service         = { type = "LoadBalancer" }
+            ingress         = { enabled = false }
             serviceAccount = {
-              create = false
-              # Reference the pre-created SA
+              create = false             
               name   = kubernetes_service_account.argocd_server.metadata[0].name
             }
           }
