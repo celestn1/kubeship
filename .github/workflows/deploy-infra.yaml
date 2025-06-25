@@ -147,14 +147,12 @@ jobs:
             -backend-config="region=${AWS_REGION}" \
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
-      # ✅ PLAN AND APPLY VPC (creates NAT, subnets, route tables)
       - name: Terraform Plan (VPC only)
         run: terraform plan -target=module.vpc -out=tfplan-vpc
 
       - name: Terraform Apply (VPC only)
         run: terraform apply -auto-approve tfplan-vpc
-
-      # ✅ PLAN AND APPLY EKS
+     
       - name: Terraform Plan (EKS only)
         id: plan
         run: |
@@ -180,7 +178,7 @@ jobs:
       
       - name: Terraform Plan & Apply (full sync)
         env:
-          # pass a real nested map, not a JSON-escaped string
+          
           TF_VAR_secrets_map: |
             {
               "/kubeship/auth": {

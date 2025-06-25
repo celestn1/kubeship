@@ -14,10 +14,10 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     alb.ingress.kubernetes.io/wafv2-acl-arn: "${module.waf.web_acl_arn}"
 spec:
-  tls:
-    - hosts:
-        - kubeship.celestn.com
-      secretName: tls-cert
+#  tls:
+#    - hosts:
+#        - kubeship.celestn.com
+#      secretName: tls-cert
 
   ingressClassName: alb
   rules:

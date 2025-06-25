@@ -141,14 +141,15 @@ module "eks" {
   }
 }
 
-# Add this after the EKS module
+# Cert Manager
 module "cert_manager" {
   source        = "./modules/cert-manager"
   namespace     = "cert-manager"
   chart_version = "v1.14.4"
 
   depends_on = [
-    module.eks
+    module.eks,
+    module.alb_controller
   ]
 }
 
@@ -220,7 +221,11 @@ module "argocd_bootstrap" {
   depends_on = [
     module.eks,
     module.eks_node_role,
-    module.eks_irsa_ebs
+    module.eks_irsa_ebs,
+    module.alb_controller,
+    module.cert_manager,
+    module.external_secrets_resources,
+    module.eks_irsa_ebs,
   ]
 
 }
@@ -247,4 +252,8 @@ module "external_secrets_resources" {
   secrets_map   = var.secrets_map
   namespace     = "external-secrets"
   irsa_role_arn = module.irsa_external_secrets.iam_role_arn
+
+  depends_on = [
+   module.alb_controller,
+  ]  
 }
