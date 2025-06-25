@@ -139,46 +139,40 @@ jobs:
         with:
           terraform_version: 1.6.6
 
-      - name: Terraform Init
-        run: |
-          terraform init -upgrade \
-            -backend-config="bucket=${TF_STATE_BUCKET}" \
-            -backend-config="key=infra/terraform.tfstate" \
-            -backend-config="region=${AWS_REGION}" \
-            -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
-
+      # 1. VPC
       - name: Terraform Plan (VPC only)
         run: terraform plan -target=module.vpc -out=tfplan-vpc
 
       - name: Terraform Apply (VPC only)
         run: terraform apply -auto-approve tfplan-vpc
-     
+
+      # 2. EKS
       - name: Terraform Plan (EKS only)
-        id: plan
         run: |
-          terraform plan -target=module.eks -out=tfplan-cluster \
+          terraform plan -target=module.eks -out=tfplan-eks \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
-        continue-on-error: true
-
-      - name: Terraform plan status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
-
       - name: Terraform Apply (EKS only)
-        id: apply
-        run: terraform apply -auto-approve -input=false -parallelism=1 tfplan-cluster
+        run: terraform apply -auto-approve -input=false tfplan-eks
 
+      # 3. ALB Controller
+      - name: Terraform Plan (ALB Controller only)
+        run: terraform plan -target=module.alb_controller -out=tfplan-alb
+      - name: Terraform Apply (ALB Controller only)
+        run: terraform apply -auto-approve tfplan-alb
+
+      # 4. Wait for AWS Load Balancer Controller webhook to be ready
       - name: Get Kubernetes config
-        id: getconfig
-        if: steps.apply.outcome == 'success'
-        run: aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION}}
+        run: aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION }}
 
-      
-      - name: Terraform Plan & Apply (full sync)
+      - name: Wait for AWS Load Balancer Controller deployment
+        run: |
+          kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=180s
+
+      # 5. Apply the rest of the infra (all modules)
+      - name: Terraform Plan (remaining infra)
         env:
-          
           TF_VAR_secrets_map: |
             {
               "/kubeship/auth": {
@@ -193,31 +187,33 @@ jobs:
                 "POSTGRES_DB":       "${{ secrets.POSTGRES_DB }}"
               }
             }
-
         run: |
           terraform plan -out=tfplan-full \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
             -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
-          terraform apply -auto-approve tfplan-full
+      - name: Terraform Apply (remaining infra)
+        run: terraform apply -auto-approve tfplan-full
 
+      # 6. Wait for ArgoCD server to be ready
       - name: Wait for ArgoCD server to be ready
         run: |
           kubectl wait --for=condition=available deployment/argocd-server \
             -n argocd --timeout=300s
-          
+
+      # 7. Apply non-ArgoCD manifests
       - name: Apply non-ArgoCD manifests
-        run: |
-          kubectl apply -f ../manifests/base/
+        run: kubectl apply -f ../manifests/base/
 
+      # 8. Apply ArgoCD apps
       - name: Apply ArgoCD apps
-        run: |
-          kubectl apply -f ../manifests/argocd-applications -n argocd
+        run: kubectl apply -f ../manifests/argocd-applications -n argocd
 
+      # 9. Check ClusterSecretStore CRD exists
       - name: Check ClusterSecretStore CRD exists
-        run: |
-          kubectl get crd clustersecretstores.external-secrets.io          
-      
+        run: kubectl get crd clustersecretstores.external-secrets.io
+
+      # 10. Force sync ArgoCD apps
       - name: Force sync ArgoCD apps
         run: |
           for app in $(kubectl get applications.argoproj.io -n argocd -o jsonpath='{.items[*].metadata.name}'); do
@@ -225,16 +221,13 @@ jobs:
               --type merge -p '{"spec": {"syncPolicy": {"automated": {"prune": true, "selfHeal": true}}}}'
           done
 
+      # 11. Refresh ArgoCD Apps
       - name: Refresh ArgoCD Apps
         run: |
           LB=$(kubectl get svc argocd-server -n argocd \
                  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
           curl -k "http://$LB/api/v1/applications?refresh=true" || true
 
-      - name: Check ClusterSecretStore CRD exists
-        run: |
-          kubectl get crd clustersecretstores.external-secrets.io
-            
+      # 12. Final: Verify deployed ArgoCD apps
       - name: Verify deployed ArgoCD apps
-        run: |
-          kubectl get applications -n argocd 
+        run: kubectl get applications -n argocd
