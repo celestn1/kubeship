@@ -72,11 +72,11 @@ module "eks_irsa_alb" {
 
 # ALB Controller for EKS
 module "alb_controller" {
-  source                   = "./modules/alb-controller"
-  eks_cluster_name         = var.eks_cluster_name
-  aws_region               = var.aws_region
-  vpc_id                   = module.vpc.vpc_id
-  alb_controller_role_arn  = module.eks_irsa_alb.alb_controller_role_arn
+  source                  = "./modules/alb-controller"
+  eks_cluster_name        = var.eks_cluster_name
+  aws_region              = var.aws_region
+  vpc_id                  = module.vpc.vpc_id
+  alb_controller_role_arn = module.eks_irsa_alb.alb_controller_role_arn
 }
 
 
@@ -133,7 +133,7 @@ module "eks" {
       # optional: key_name = var.ssh_key_name
       # optional: disk_size = 20
     }
-  }  
+  }
 
   tags = {
     Environment = var.environment
@@ -179,12 +179,6 @@ module "cloudwatch" {
   cluster_name = var.eks_cluster_name
 }
 
-# Lookup the ALB created by the ALB Controller
-data "aws_lb" "kubeship" {
-  name = "${var.project_name}-alb"
-}
-
-
 # WAF
 module "waf" {
   source       = "./modules/waf"
@@ -192,9 +186,6 @@ module "waf" {
   description  = "WAF for kubeship ingress"
   project_name = var.project_name
   environment  = var.environment
-
-  # point at the LB the controller created
-  alb_arn = data.aws_lb.kubeship.arn
 }
 
 # Secrets Manager
@@ -207,11 +198,11 @@ module "secrets" {
 
 # EKS IRSA for EBS CSI Driver
 module "eks_irsa_ebs" {
-  source             = "./modules/eks-irsa-ebs"
-  project_name       = var.project_name
-  environment        = var.environment
-  oidc_provider_arn  = module.eks.oidc_provider_arn
-  oidc_provider_url  = replace(module.eks.oidc_provider, "https://", "")
+  source            = "./modules/eks-irsa-ebs"
+  project_name      = var.project_name
+  environment       = var.environment
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = replace(module.eks.oidc_provider, "https://", "")
 }
 
 # ArgoCD GitOps Bootstrap
@@ -223,7 +214,7 @@ module "argocd_bootstrap" {
   target_revision          = var.target_revision
   argocd_app_manifest_path = var.argocd_app_manifest_path
 
-  install_ebs_csi           = true
+  install_ebs_csi             = true
   ebs_csi_controller_role_arn = module.eks_irsa_ebs.ebs_csi_controller_role_arn
 
   depends_on = [
@@ -251,9 +242,9 @@ module "irsa_external_secrets" {
 
 # External Secrets Operator
 module "external_secrets_resources" {
-  source      = "./modules/external-secrets"
-  aws_region  = var.aws_region  
-  secrets_map = var.secrets_map
-  namespace   = "external-secrets"
+  source        = "./modules/external-secrets"
+  aws_region    = var.aws_region
+  secrets_map   = var.secrets_map
+  namespace     = "external-secrets"
   irsa_role_arn = module.irsa_external_secrets.iam_role_arn
 }

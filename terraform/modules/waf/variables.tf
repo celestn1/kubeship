@@ -21,7 +21,3 @@ variable "environment" {
   type        = string
 }
 
-variable "alb_arn" {
-  description = "ARN of the Application Load Balancer to attach the WAF to"
-  type        = string
-}

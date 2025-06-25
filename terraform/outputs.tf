@@ -9,17 +9,6 @@ output "waf_web_acl_arn" {
   value       = module.waf.web_acl_arn
 }
 
-# ALB lookup via the aws_lb data source
-output "alb_arn" {
-  value       = data.aws_lb.kubeship.arn
-  description = "ARN of the Application Load Balancer"
-}
-
-output "alb_dns_name" {
-  value       = data.aws_lb.kubeship.dns_name
-  description = "DNS name of the Application Load Balancer"
-}
-
 output "cluster_name" {
   description = "Name of the EKS cluster"
   value       = module.eks.cluster_name
