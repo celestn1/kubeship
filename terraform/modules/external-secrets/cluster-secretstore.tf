@@ -3,16 +3,17 @@
 resource "null_resource" "wait_for_external_secrets_crd" {
   provisioner "local-exec" {
     command = <<EOT
-for i in $(seq 1 12); do
+i=1
+while [ $i -le 12 ]; do
   kubectl get crd clustersecretstores.external-secrets.io && exit 0
   echo "Waiting for ClusterSecretStore CRD..."
   sleep 5
+  i=$((i+1))
 done
 exit 1
 EOT
   }
 }
-
 
 resource "kubectl_manifest" "cluster_secret_store" {
   yaml_body = yamlencode({
