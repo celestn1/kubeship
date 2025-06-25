@@ -206,6 +206,16 @@ module "eks_irsa_ebs" {
   oidc_provider_url = replace(module.eks.oidc_provider, "https://", "")
 }
 
+# ArgoCD IRSA IAM Role
+module "irsa_argocd" {
+  source                  = "./modules/irsa-argocd"
+  project_name            = var.project_name
+  environment             = var.environment
+  eks_oidc_provider_arn   = module.eks.oidc_provider_arn
+  eks_oidc_provider_url   = replace(module.eks.oidc_provider, "https://", "")
+  argocd_namespace        = "argocd"
+}
+
 # ArgoCD GitOps Bootstrap
 module "argocd_bootstrap" {
   source                   = "./modules/argocd-bootstrap"
