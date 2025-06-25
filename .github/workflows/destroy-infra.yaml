@@ -58,8 +58,19 @@ jobs:
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
       - name: Get Kubernetes config
+        id: configure_kubectl
         run: |
-          aws eks update-kubeconfig --name ${{ env.TF_VAR_eks_cluster_name }} --region ${{ env.AWS_REGION }}
+          if aws eks describe-cluster \
+                --name "${{ env.EKS_CLUSTER_NAME }}" \
+                --region "${{ env.REGION }}" \
+                >/dev/null 2>&1; then
+            echo "Cluster exists, updating kubeconfig"
+            aws eks update-kubeconfig \
+              --name "${{ env.EKS_CLUSTER_NAME }}" \
+              --region "${{ env.REGION }}"
+          else
+            echo "Cluster ${{ env.EKS_CLUSTER_NAME }} not found, skipping kubeconfig"
+          fi
 
       - name: Remove Helm releases explicitly
         run: |
