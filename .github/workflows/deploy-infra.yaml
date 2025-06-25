@@ -235,13 +235,17 @@ jobs:
       # Extract WAF ARN from Terraform output      
       - name: Extract WAF ARN
         id: waf
-        run: echo "::set-output name=acl_arn::$(terraform output -raw waf_web_acl_arn)"
-
-      - name: Render & apply Ingress
         run: |
+          # write to GITHUB_OUTPUT instead of set-output
+          echo "acl_arn=$(terraform output -raw waf_web_acl_arn)" >> $GITHUB_OUTPUT
+
+      - name: Render & apply Ingress with real WAF ARN
+        run: |
+          # grab it from the previous step
           WAF="${{ steps.waf.outputs.acl_arn }}"
+          # note the correct relative path from terraform/: ../manifests/ingress/…
           sed "s|INJECT_WAF_ACL_ARN_HERE|${WAF}|g" \
-            manifests/ingress/ingress-cert.tpl.yaml \
+            ../manifests/ingress/ingress-cert.tpl.yaml \
             > rendered-ingress.yaml
           kubectl apply -f rendered-ingress.yaml
 
