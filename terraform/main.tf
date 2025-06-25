@@ -56,9 +56,9 @@ module "vpc" {
   cluster_name       = var.eks_cluster_name
 
   #Test Single Nat Gateway
-  enable_nat_gateway     = true
-  single_nat_gateway     = true
-  one_nat_gateway_per_az = false
+#  enable_nat_gateway     = true
+#  single_nat_gateway     = true
+#  one_nat_gateway_per_az = false
 }
 
 # EKS IRSA for ALB Ingress Controller
@@ -148,8 +148,7 @@ module "cert_manager" {
   chart_version = "v1.14.4"
 
   depends_on = [
-    module.eks,
-    module.alb_controller
+    module.eks
   ]
 }
 
@@ -221,10 +220,7 @@ module "argocd_bootstrap" {
   depends_on = [
     module.eks,
     module.eks_node_role,
-    module.eks_irsa_ebs,
-    module.alb_controller,
-    module.cert_manager,
-    module.external_secrets_resources,
+    module.eks_irsa_ebs
   ]
 
 }
@@ -251,8 +247,4 @@ module "external_secrets_resources" {
   secrets_map   = var.secrets_map
   namespace     = "external-secrets"
   irsa_role_arn = module.irsa_external_secrets.iam_role_arn
-
-  depends_on = [
-   module.alb_controller,
-  ]  
 }
