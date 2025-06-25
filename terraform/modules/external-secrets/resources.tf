@@ -4,7 +4,7 @@ resource "kubectl_manifest" "external_secret" {
   for_each = var.secrets_map
 
   yaml_body = yamlencode({
-    apiVersion = "external-secrets.io/v1beta1"
+    apiVersion = "external-secrets.io/v1"
     kind       = "ExternalSecret"
     metadata = {
       name      = lower(replace(basename(each.key), "_", "-"))  # e.g. "auth"
