@@ -29,7 +29,7 @@ resource "helm_release" "argocd" {
               create      = false
               name        = "argocd-server"
               annotations = {
-                "eks.amazonaws.com/role-arn" = module.irsa_argocd.argocd_server_role_arn
+                "eks.amazonaws.com/role-arn" = var.argocd_server_role_arn
               }
             }
           }
@@ -37,10 +37,9 @@ resource "helm_release" "argocd" {
       )
     )
   ]
-  
+
   depends_on = [ 
     kubernetes_namespace.argocd, 
-    module.irsa_argocd
   ]
 }
 

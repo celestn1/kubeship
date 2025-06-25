@@ -56,9 +56,9 @@ module "vpc" {
   cluster_name       = var.eks_cluster_name
 
   #Test Single Nat Gateway
-#  enable_nat_gateway     = true
-#  single_nat_gateway     = true
-#  one_nat_gateway_per_az = false
+  #  enable_nat_gateway     = true
+  #  single_nat_gateway     = true
+  #  one_nat_gateway_per_az = false
 }
 
 # EKS IRSA for ALB Ingress Controller
@@ -148,7 +148,7 @@ module "cert_manager" {
   chart_version = "v1.14.4"
 
   depends_on = [
-    module.eks, 
+    module.eks,
     module.alb_controller
   ]
 }
@@ -208,12 +208,12 @@ module "eks_irsa_ebs" {
 
 # ArgoCD IRSA IAM Role
 module "irsa_argocd" {
-  source                  = "./modules/irsa-argocd"
-  project_name            = var.project_name
-  environment             = var.environment
-  eks_oidc_provider_arn   = module.eks.oidc_provider_arn
-  eks_oidc_provider_url   = replace(module.eks.oidc_provider, "https://", "")
-  argocd_namespace        = "argocd"
+  source                = "./modules/irsa-argocd"
+  project_name          = var.project_name
+  environment           = var.environment
+  eks_oidc_provider_arn = module.eks.oidc_provider_arn
+  eks_oidc_provider_url = replace(module.eks.oidc_provider, "https://", "")
+  argocd_namespace      = "argocd"
 }
 
 # ArgoCD GitOps Bootstrap
@@ -227,6 +227,7 @@ module "argocd_bootstrap" {
 
   install_ebs_csi             = true
   ebs_csi_controller_role_arn = module.eks_irsa_ebs.ebs_csi_controller_role_arn
+  argocd_server_role_arn      = module.irsa_argocd.argocd_server_role_arn
 
   depends_on = [
     module.eks,
@@ -262,5 +263,5 @@ module "external_secrets_resources" {
 
   depends_on = [
     module.alb_controller
-  ]  
+  ]
 }

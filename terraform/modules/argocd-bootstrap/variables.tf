@@ -42,3 +42,8 @@ variable "ebs_csi_controller_role_arn" {
   type        = string
   description = "Role ARN for the EBS CSI controller"
 }
+
+variable "argocd_server_role_arn" {
+  type        = string
+  description = "IAM Role ARN for the argocd-server ServiceAccount (IRSA)"
+}
