@@ -1,34 +1,34 @@
 # kubeship/manifests/base/ingress-cert.yaml 
-
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: kubeship-ingress
-  namespace: nginx-gateway
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/load-balancer-name: kubeship-alb
-#    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    alb.ingress.kubernetes.io/wafv2-acl-arn: "${module.waf.web_acl_arn}"
-spec:
-  tls:
-    - hosts:
-        - kubeship.celestn.com
-      secretName: tls-cert
-
-  ingressClassName: alb
-  rules:
-    - host: kubeship.celestn.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: nginx-gateway
-                port:
-                  number: 80
+#
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: kubeship-ingress
+#  namespace: nginx-gateway
+#  annotations:
+#    kubernetes.io/ingress.class: alb
+#    alb.ingress.kubernetes.io/scheme: internet-facing
+#    alb.ingress.kubernetes.io/target-type: ip
+#    alb.ingress.kubernetes.io/load-balancer-name: kubeship-alb
+##    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+#    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
+#    cert-manager.io/cluster-issuer: letsencrypt-prod
+#    alb.ingress.kubernetes.io/wafv2-acl-arn: INJECT_WAF_ACL_ARN_HERE
+#spec:
+#  tls:
+#    - hosts:
+#        - kubeship.celestn.com
+#      secretName: tls-cert
+#
+#  ingressClassName: alb
+#  rules:
+#    - host: kubeship.celestn.com
+#      http:
+#        paths:
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: nginx-gateway
+#                port:
+#                  number: 80

@@ -232,6 +232,19 @@ jobs:
             app/nginx-gateway \
             --timeout=120s
 
+      # Extract WAF ARN from Terraform output      
+      - name: Extract WAF ARN
+        id: waf
+        run: echo "::set-output name=acl_arn::$(terraform output -raw waf_web_acl_arn)"
+
+      - name: Render & apply Ingress
+        run: |
+          WAF="${{ steps.waf.outputs.acl_arn }}"
+          sed "s|INJECT_WAF_ACL_ARN_HERE|${WAF}|g" \
+            manifests/ingress/ingress-cert.tpl.yaml \
+            > rendered-ingress.yaml
+          kubectl apply -f rendered-ingress.yaml
+
       # 8. Install ArgoCD base manifests
       - name: Apply base manifests
         run: kubectl apply -f ../manifests/base/
