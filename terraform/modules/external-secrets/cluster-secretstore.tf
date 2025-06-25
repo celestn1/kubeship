@@ -1,21 +1,8 @@
 # kubeship/terraform/modules/external-secrets/cluster-secretstore.tf
 
-resource "null_resource" "wait_for_external_secrets_crd" {
-  provisioner "local-exec" {
-    command = <<EOT
-i=1
-while [ $i -le 12 ]; do
-  kubectl get crd clustersecretstores.external-secrets.io && exit 0
-  echo "Waiting for ClusterSecretStore CRD..."
-  sleep 30
-  i=$((i+1))
-done
-exit 1
-EOT
-  }
-}
-
 resource "kubectl_manifest" "cluster_secret_store" {
+  apply_only = true
+
   yaml_body = yamlencode({
     apiVersion = "external-secrets.io/v1beta1"
     kind       = "ClusterSecretStore"
@@ -41,7 +28,6 @@ resource "kubectl_manifest" "cluster_secret_store" {
   })
 
   depends_on = [
-    helm_release.external_secrets,
-    null_resource.wait_for_external_secrets_crd
+    helm_release.external_secrets
   ]
 }
