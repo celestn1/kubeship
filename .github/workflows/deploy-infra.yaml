@@ -23,7 +23,7 @@ env:
   # Docker/ECR
   IMAGE_TAG:       latest
   ECR_REPO_1:      auth-service
-  ECR_REPO_2:      frontend
+  #ECR_REPO_2:      frontend
   ECR_REPO_3:      nginx-gateway
 
   # AWS & Terraform
@@ -98,19 +98,12 @@ jobs:
           docker push $URI:${{ env.IMAGE_TAG }}
           echo "auth-digest=$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})" >> $GITHUB_OUTPUT
 
-      - name: Build & Push frontend
-        if: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.shared == 'true' }}      
+      # Build & Push frontend single-page app with Nginx   
+      - name: Build & Push nginx-gateway & Frontend
+        id: nginx-digest
+        if: ${{ steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs['frontend'] == 'true' || steps.changes.outputs.shared == 'true' }}      
         run: |
-          docker build --build-arg VITE_API_URL=/v1/auth -t frontend:${{ env.IMAGE_TAG }} -f microservices/frontend/Dockerfile .
-          URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_2 }}
-          docker tag frontend:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
-          docker push $URI:${{ env.IMAGE_TAG }}
-          echo "frontend-digest=$(docker inspect --format='{{index .RepoDigests 0}}' $URI:${{ env.IMAGE_TAG }})" >> $GITHUB_OUTPUT
-
-      - name: Build & Push nginx-gateway
-        if: ${{ steps.changes.outputs['nginx-gateway'] == 'true' || steps.changes.outputs.shared == 'true' }}      
-        run: |
-          docker build -t nginx-gateway:${{ env.IMAGE_TAG }} -f ./nginx/Dockerfile ./nginx
+          docker build -t nginx-gateway:${{ env.IMAGE_TAG }} -f ./nginx/Dockerfile .
           URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.TF_VAR_project_name }}-${{ env.ECR_REPO_3 }}
           docker tag nginx-gateway:${{ env.IMAGE_TAG }} $URI:${{ env.IMAGE_TAG }}
           docker push $URI:${{ env.IMAGE_TAG }}
@@ -160,7 +153,6 @@ jobs:
         run: |
           terraform plan -target=module.eks -out=tfplan-cluster \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
-            -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
         continue-on-error: true
 
@@ -210,7 +202,6 @@ jobs:
         run: |
           terraform plan -out=tfplan-full \
             -var="auth_image_digest=${{ needs.build-and-push.outputs.auth-digest }}" \
-            -var="frontend_image_digest=${{ needs.build-and-push.outputs.frontend-digest }}" \
             -var="nginx_image_digest=${{ needs.build-and-push.outputs.nginx-digest }}"
           terraform apply -auto-approve tfplan-full
 

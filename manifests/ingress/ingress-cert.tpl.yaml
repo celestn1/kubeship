@@ -15,12 +15,10 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     alb.ingress.kubernetes.io/wafv2-acl-arn: INJECT_WAF_ACL_ARN_HERE
 spec:
+#  ingressClassName: alb
 #  tls:
-#    - hosts:
-#        - kubeship.celestn.com
+#    - hosts: [ kubeship.celestn.com ]
 #      secretName: tls-cert
-#
-  ingressClassName: alb
   rules:
     - host: kubeship.celestn.com
       http:
@@ -30,5 +28,4 @@ spec:
             backend:
               service:
                 name: nginx-gateway
-                port:
-                  number: 80
+                port: { number: 80 }
