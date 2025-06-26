@@ -1,46 +1,46 @@
-# kubeship/manifests/base/ingress-cert.yaml 
-# kubeship/manifests/ingress/ingress-cert.tpl.yaml
+# kubeship/manifests/base/ingress-cert.yaml
 
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: kubeship-ingress
-  namespace: nginx-gateway
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/load-balancer-name: kubeship-alb
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-#    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    alb.ingress.kubernetes.io/wafv2-acl-arn: INJECT_WAF_ACL_ARN_HERE
-spec:
-#  ingressClassName: alb
-#  tls:
-#    - hosts: [ kubeship.celestn.com ]
-#      secretName: tls-cert
-
-  rules:
-    # Frontend rule through Nginx Gateway
-    - host: kubeship.celestn.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: nginx-gateway
-                port: 80
-
-    # Argo CD rule
-    - host: argocd.celestn.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 80
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: kubeship-ingress
+#  namespace: nginx-gateway
+#  annotations:
+#    kubernetes.io/ingress.class: alb
+#    alb.ingress.kubernetes.io/scheme: internet-facing
+#    alb.ingress.kubernetes.io/target-type: ip
+#    alb.ingress.kubernetes.io/load-balancer-name: kubeship-alb
+#    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+##    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
+#    cert-manager.io/cluster-issuer: letsencrypt-prod
+#    alb.ingress.kubernetes.io/wafv2-acl-arn: INJECT_WAF_ACL_ARN_HERE
+#spec:
+##  ingressClassName: alb
+##  tls:
+##    - hosts: [ kubeship.celestn.com ]
+##      secretName: tls-cert
+#
+#  rules:
+#    # Frontend rule through Nginx Gateway
+#    - host: kubeship.celestn.com
+#      http:
+#        paths:
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: nginx-gateway
+#                port:
+#                  number: 80
+#
+#    # Argo CD rule
+#    - host: argocd.celestn.com
+#      http:
+#        paths:
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: argocd-server
+#                port:
+#                  number: 80

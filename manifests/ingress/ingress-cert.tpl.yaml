@@ -30,7 +30,8 @@ spec:
             backend:
               service:
                 name: nginx-gateway
-                port: 80
+                port:
+                  number: 80
 
     # Argo CD rule
     - host: argocd.celestn.com
