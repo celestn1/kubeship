@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  REGION:                        ${{ secrets.AWS_REGION }}
+  AWS_REGION:                    ${{ secrets.AWS_REGION }}
   TF_STATE_BUCKET:               ${{ secrets.TF_STATE_BUCKET }}
   TF_LOCK_TABLE:                 ${{ secrets.TF_LOCK_TABLE }}
   TF_VAR_project_name:           ${{ secrets.TF_PROJECT_NAME }}
@@ -58,7 +58,6 @@ jobs:
             -backend-config="dynamodb_table=${TF_LOCK_TABLE}"
 
       - name: Get Kubernetes config
-        if: steps.apply.outcome == 'success'
         run: |
           EKS_CLUSTER_NAME="${{ env.TF_VAR_eks_cluster_name }}"
           if aws eks describe-cluster \
@@ -72,8 +71,6 @@ jobs:
           else
             echo "Cluster ${EKS_CLUSTER_NAME} not found, skipping kubeconfig"
           fi
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: Remove Helm releases explicitly
         run: |
