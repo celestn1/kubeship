@@ -33,14 +33,3 @@
 #                port:
 #                  number: 80
 #
-#    # Argo CD rule
-#    - host: argocd.celestn.com
-#      http:
-#        paths:
-#          - path: /
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: argocd-server
-#                port:
-#                  number: 80

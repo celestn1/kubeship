@@ -226,19 +226,24 @@ jobs:
       # 7 Extract WAF ARN from Terraform output      
       - name: Extract WAF ARN
         id: waf
-        run: |
-          # write to GITHUB_OUTPUT instead of set-output
+        run: |          
           echo "acl_arn=$(terraform output -raw waf_web_acl_arn)" >> $GITHUB_OUTPUT
 
       - name: Render & apply Ingress with real WAF ARN
-        run: |
-          # grab it from the previous step
-          WAF="${{ steps.waf.outputs.acl_arn }}"
-          # note the correct relative path from terraform/: ../manifests/ingress/…
+        run: |          
+          WAF="${{ steps.waf.outputs.acl_arn }}"        
           sed "s|INJECT_WAF_ACL_ARN_HERE|${WAF}|g" \
             ../manifests/ingress/ingress-cert.tpl.yaml \
             > rendered-ingress.yaml
           kubectl apply -f rendered-ingress.yaml
+
+      - name: Render & apply ArgoCD Ingress with real WAF ARN
+        run: |
+          WAF="${{ steps.waf.outputs.acl_arn }}"
+          sed "s|INJECT_WAF_ACL_ARN_HERE|${WAF}|g" \
+            ../manifests/base/argocd-ingress.yaml \
+            > rendered-argocd-ingress.yaml
+          kubectl apply -f rendered-argocd-ingress.yaml
 
       # 8. Install ArgoCD base manifests
       - name: Apply base manifests

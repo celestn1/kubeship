@@ -1,10 +1,9 @@
-# kubeship/manifests/ingress/ingress-cert.tpl.yaml
-
+# kubeship/manifests/base/argocd-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: kubeship-ingress
-  namespace: nginx-gateway
+  name: argocd-ingress
+  namespace: argocd
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
@@ -15,20 +14,14 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     alb.ingress.kubernetes.io/wafv2-acl-arn: INJECT_WAF_ACL_ARN_HERE
 spec:
-#  ingressClassName: alb
-#  tls:
-#    - hosts: [ kubeship.celestn.com ]
-#      secretName: tls-cert
-
   rules:
-    # Frontend rule through Nginx Gateway
-    - host: kubeship.celestn.com
+    - host: argocd.celestn.com
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: nginx-gateway
+                name: argocd-server
                 port:
                   number: 80
