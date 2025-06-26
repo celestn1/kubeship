@@ -164,7 +164,6 @@ jobs:
         id: apply
         run: terraform apply -auto-approve -input=false -parallelism=1 tfplan-cluster
 
-      # 4. Wait for AWS Load Balancer Controller webhook to be ready
       - name: Get Kubernetes config
         id: getconfig
         if: steps.apply.outcome == 'success'
