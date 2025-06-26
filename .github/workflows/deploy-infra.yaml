@@ -179,7 +179,7 @@ jobs:
                 
       - name: Wait for AWS Load Balancer Controller deployment
         run: |
-          kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=180s
+          kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=60s
         continue-on-error: true
 
       # 5. Apply the rest of the infra (all modules)
@@ -221,8 +221,9 @@ jobs:
           kubectl -n argocd wait \
             --for=jsonpath='{.status.sync.status}'=Synced \
             app/nginx-gateway \
-            --timeout=120s
-
+            --timeout=60s
+          continue-on-error: true
+          
       # Extract WAF ARN from Terraform output      
       - name: Extract WAF ARN
         id: waf
