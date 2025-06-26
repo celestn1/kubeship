@@ -1,27 +1,27 @@
 # kubeship/manifests/base/argocd-ingress.yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: argocd-ingress
-  namespace: argocd
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/load-balancer-name: kubeship-alb
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-#    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    alb.ingress.kubernetes.io/wafv2-acl-arn: INJECT_WAF_ACL_ARN_HERE
-spec:
-  rules:
-    - host: argocd.celestn.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 80
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: argocd-ingress
+#  namespace: argocd
+#  annotations:
+#    kubernetes.io/ingress.class: alb
+#    alb.ingress.kubernetes.io/scheme: internet-facing
+#    alb.ingress.kubernetes.io/target-type: ip
+#    alb.ingress.kubernetes.io/load-balancer-name: kubeship-alb
+#    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+##    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
+#    cert-manager.io/cluster-issuer: letsencrypt-prod
+#    alb.ingress.kubernetes.io/wafv2-acl-arn: INJECT_WAF_ACL_ARN_HERE
+#spec:
+#  rules:
+#    - host: argocd.celestn.com
+#      http:
+#        paths:
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: argocd-server
+#                port:
+#                  number: 80

@@ -241,7 +241,7 @@ jobs:
         run: |
           WAF="${{ steps.waf.outputs.acl_arn }}"
           sed "s|INJECT_WAF_ACL_ARN_HERE|${WAF}|g" \
-            ../manifests/base/argocd-ingress.yaml \
+            ../manifests/ingress/argocd-ingress.tpl.yaml \
             > rendered-argocd-ingress.yaml
           kubectl apply -f rendered-argocd-ingress.yaml
 
