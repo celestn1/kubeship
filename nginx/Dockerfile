@@ -25,7 +25,7 @@ RUN npm run build
 FROM nginx:alpine
 
 # 5. Remove any leftover default configs
-RUN rm -f /etc/nginx/conf.d/* /etc/nginx/nginx.conf
+#RUN rm -f /etc/nginx/conf.d/* /etc/nginx/nginx.conf
 
 # 6. Optional: Custom nginx.conf for fallback routing [ConfigMap used in k8s]
 # COPY nginx.conf /etc/nginx/nginx.conf
