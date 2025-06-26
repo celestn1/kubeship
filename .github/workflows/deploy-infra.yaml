@@ -222,8 +222,8 @@ jobs:
             --for=jsonpath='{.status.sync.status}'=Synced \
             app/nginx-gateway \
             --timeout=60s
-          continue-on-error: true
-          
+        continue-on-error: true
+
       # Extract WAF ARN from Terraform output      
       - name: Extract WAF ARN
         id: waf
