@@ -65,9 +65,9 @@ module "vpc" {
   cluster_name       = var.eks_cluster_name
 
   #Test Single Nat Gateway
-  #  enable_nat_gateway     = true
-  #  single_nat_gateway     = true
-  #  one_nat_gateway_per_az = false
+  enable_nat_gateway     = true
+  single_nat_gateway     = true
+  one_nat_gateway_per_az = false
 }
 
 # EKS IRSA for ALB Ingress Controller
