@@ -262,24 +262,12 @@ jobs:
           done
 
       # 11. Refresh ArgoCD Apps
-      - name: Refresh ArgoCD apps
+      - name: Refresh ArgoCD Apps
         run: |
-          LB=$(kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-          echo "ArgoCD LB is: $LB"
-          # Install argocd CLI (if not already)
-          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          chmod +x argocd
-
-          # Login
-          ./argocd login "$LB" \
-            --username admin \
-            --password ${{ secrets.ARGOCD_ADMIN_PASSWORD }} \
-            --insecure
-
-          # Refresh everything
-          ./argocd app refresh --all
-        continue-on-error: true
-
+          for app in $(kubectl get applications.argoproj.io -n argocd -o jsonpath='{.items[*].metadata.name}'); do
+            kubectl argo refresh $app -n argocd --refresh-type hard
+          done
+          
       # 12. Final: Verify deployed ArgoCD apps
       - name: Verify deployed ArgoCD apps
         run: kubectl get applications -n argocd
