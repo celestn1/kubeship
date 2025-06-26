@@ -173,12 +173,12 @@ data "aws_eks_cluster_auth" "this" {
   depends_on = [module.eks]
 }
 
-# ECR
+# ECR (NGINX-gateway is merged with frontend)
 module "ecr" {
   source           = "./modules/ecr"
   project_name     = var.project_name
   environment      = var.environment
-  repository_names = ["auth-service", "frontend", "nginx-gateway"]
+  repository_names = ["auth-service", "nginx-gateway"]
 }
 
 # CloudWatch
