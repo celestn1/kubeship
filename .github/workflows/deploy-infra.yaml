@@ -262,12 +262,8 @@ jobs:
           done
 
       # 11. Refresh ArgoCD Apps
-      - name: Refresh ArgoCD Apps
-        run: |
-          for app in $(kubectl get applications.argoproj.io -n argocd -o jsonpath='{.items[*].metadata.name}'); do
-            kubectl argo refresh $app -n argocd --refresh-type hard
-          done
-          
+      #- name: Refresh ArgoCD Apps
+
       # 12. Final: Verify deployed ArgoCD apps
       - name: Verify deployed ArgoCD apps
         run: kubectl get applications -n argocd
