@@ -262,18 +262,22 @@ jobs:
           done
 
       # 11. Refresh ArgoCD Apps
-      - name: Refresh ArgoCD Apps
+      - name: Refresh ArgoCD apps
         run: |
-          # grab the hostname into LB, then run curl in a separate statement
-          LB=$(kubectl get svc argocd-server -n argocd \
-                 -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          LB=$(kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
           echo "ArgoCD LB is: $LB"
-          
-          # use HTTPS (argocd-server serves TLS on 443) 
-          # and bound the total time so the step can't hang forever
-          curl -k --connect-timeout 5 --max-time 10 \
-               "https://$LB/api/v1/applications?refresh=true" \
-            || echo "Refresh API call failed (ignored)"
+          # Install argocd CLI (if not already)
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x argocd
+
+          # Login
+          ./argocd login "$LB" \
+            --username admin \
+            --password ${{ secrets.ARGOCD_ADMIN_PASSWORD }} \
+            --insecure
+
+          # Refresh everything
+          ./argocd app refresh --all
         continue-on-error: true
 
       # 12. Final: Verify deployed ArgoCD apps
