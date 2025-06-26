@@ -19,7 +19,9 @@ spec:
 #  tls:
 #    - hosts: [ kubeship.celestn.com ]
 #      secretName: tls-cert
+
   rules:
+    # Frontend rule through Nginx Gateway
     - host: kubeship.celestn.com
       http:
         paths:
@@ -28,4 +30,16 @@ spec:
             backend:
               service:
                 name: nginx-gateway
-                port: { number: 80 }
+                port: 80
+
+    # Argo CD rule
+    - host: argocd.celestn.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80

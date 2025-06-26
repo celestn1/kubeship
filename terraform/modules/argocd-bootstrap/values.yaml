@@ -2,9 +2,14 @@
 
 server:
   service:
-    type: LoadBalancer
+    type: ClusterIP
   ingress:
-    enabled: false
+    enabled: true
+    hosts:
+      - host: argocd.celestn.com
+        paths:
+          - path: /
+            pathType: Prefix
 
 configs:
   params:
@@ -12,5 +17,4 @@ configs:
 
 admin:
   enabled: true
-  password: $2y$10$u0HP1uC6gKhOVw4UAeUucOqa.S3wcdqPPya29CKOiuxIj9lqngxmW  
-
+  password: $2y$10$u0HP1uC6gKhOVw4UAeUucOqa.S3wcdqPPya29CKOiuxIj9lqngxmW
