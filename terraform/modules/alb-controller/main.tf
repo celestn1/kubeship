@@ -33,13 +33,13 @@ resource "helm_release" "aws_load_balancer_controller" {
     value = var.vpc_id
   }
 
-  # Tell the chart not to create its own SA
+  # Helm-chart not to create a SA
   set {
     name  = "serviceAccount.create"
     value = "false"
   }
 
-  # Bind to our existing, annotated SA
+  # Bind to the existing, annotated SA
   set {
     name  = "serviceAccount.name"
     value = kubernetes_service_account.alb_controller.metadata[0].name
