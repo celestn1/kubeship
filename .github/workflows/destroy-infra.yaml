@@ -41,7 +41,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume:    ${{ secrets.CI_IAM_ROLE_ARN }}
-          aws-region:        ${{ env.REGION }}
+          aws-region:        ${{ env.AWS_REGION }}
           role-session-name: github-actions-eks-destroy
 
       - name: Set up Terraform
