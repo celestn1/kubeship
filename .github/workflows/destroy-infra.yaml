@@ -82,6 +82,7 @@ jobs:
       - name: Delete ArgoCD apps
         run: |
           kubectl delete -f ../manifests/argocd-applications -n argocd --ignore-not-found=true
+        continue-on-error: true
 
       - name: Delete non-ArgoCD manifests (skip missing CRDs)
         run: |
@@ -92,7 +93,8 @@ jobs:
               echo "Skipping $file: CRD not present"
             fi
           done
-
+        continue-on-error: true
+        
       - name: Force-delete AWS Secrets Manager entries
         run: |
           secrets=$(aws secretsmanager list-secrets --include-planned-deletion --query "SecretList[?starts_with(Name,'/kubeship/')].Name" --output text)
