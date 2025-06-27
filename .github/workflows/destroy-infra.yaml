@@ -77,6 +77,7 @@ jobs:
           helm uninstall argocd -n argocd || true
           helm uninstall external-secrets -n external-secrets || true
           helm uninstall cert-manager -n cert-manager || true
+        continue-on-error: true
 
       - name: Delete ArgoCD apps
         run: |
@@ -98,7 +99,8 @@ jobs:
           for secret in $secrets; do
             echo "Deleting secret: $secret"
             aws secretsmanager delete-secret --secret-id "$secret" --force-delete-without-recovery || true
-          done          
+          done
+        continue-on-error: true          
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
