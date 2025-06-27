@@ -86,15 +86,20 @@ jobs:
 
       - name: Delete non-ArgoCD manifests (skip missing CRDs)
         run: |
+          # Tear down our Ingresses first so the ALB & WAF can be deleted
+          kubectl delete ingress kubeship-ingress  -n nginx-gateway  --ignore-not-found || true
+          kubectl delete ingress argocd-ingress     -n argocd          --ignore-not-found || true
+
+          # Then remove any base manifests (e.g. cluster-issuer / certificate) if their CRDs exist
           for file in ../manifests/base/*.yaml; do
-            if kubectl apply --dry-run=client --server-side -f "$file" > /dev/null 2>&1; then
-              kubectl delete -f "$file" --ignore-not-found=true || true
+            if kubectl apply --dry-run=client --server-side -f "$file" &> /dev/null; then
+              kubectl delete -f "$file" --ignore-not-found || true
             else
               echo "Skipping $file: CRD not present"
             fi
           done
         continue-on-error: true
-        
+
       - name: Force-delete AWS Secrets Manager entries
         run: |
           secrets=$(aws secretsmanager list-secrets --include-planned-deletion --query "SecretList[?starts_with(Name,'/kubeship/')].Name" --output text)

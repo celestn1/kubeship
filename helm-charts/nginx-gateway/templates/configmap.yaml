@@ -48,7 +48,7 @@ data:
         proxy_connect_timeout 90;
         }
 
-        # → add more microservices as you grow:
+        # More microservices can be added here:
         # location /v1/payments/ { proxy_pass http://payments:80; … }
 
         # all other traffic → React SPA

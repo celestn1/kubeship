@@ -9,5 +9,5 @@ variable "namespace" {
 variable "chart_version" {
   description = "Version of the cert-manager Helm chart"
   type        = string
-  default     = "v1.14.4" # Use a pinned version to ensure reproducibility
+  default     = "v1.18.1"
 }
