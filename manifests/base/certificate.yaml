@@ -8,7 +8,7 @@ metadata:
 spec:
   secretName: tls-cert           
   issuerRef:
-    name: letsencrypt-prod       
+    name: letsencrypt-http01-prod     
     kind: ClusterIssuer
   commonName: kubeship.celestn.com
   dnsNames:
