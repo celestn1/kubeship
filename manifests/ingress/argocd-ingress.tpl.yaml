@@ -11,15 +11,15 @@ metadata:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/load-balancer-name: kubeship-alb
     alb.ingress.kubernetes.io/group.name: kubeship-group
-#    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+#    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
     cert-manager.io/cluster-issuer: letsencrypt-http01-prod
     alb.ingress.kubernetes.io/wafv2-acl-arn: INJECT_WAF_ACL_ARN_HERE
 spec:
   ingressClassName: alb
-  tls:
-    - hosts: [ argocd.celestn.com ]
-      secretName: argocd-celestn-com-tls-cert  
+#  tls:
+#    - hosts: [ argocd.celestn.com ]
+#      secretName: argocd-celestn-com-tls-cert  
   rules:
     - host: argocd.celestn.com
       http:
