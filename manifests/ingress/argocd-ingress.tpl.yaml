@@ -16,7 +16,7 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-http01-prod
     alb.ingress.kubernetes.io/wafv2-acl-arn: INJECT_WAF_ACL_ARN_HERE
 spec:
-  #ingressClassName: alb
+  ingressClassName: alb
   tls:
     - hosts: [ argocd.celestn.com ]
       secretName: argocd-celestn-com-tls-cert  
