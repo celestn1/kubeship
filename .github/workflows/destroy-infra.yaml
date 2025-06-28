@@ -84,11 +84,19 @@ jobs:
           kubectl delete -f ../manifests/argocd-applications -n argocd --ignore-not-found=true
         continue-on-error: true
 
-      - name: Delete non-ArgoCD manifests (skip missing CRDs)
-        run: |
-          # Tear down our Ingresses first so the ALB & WAF can be deleted
-          kubectl delete ingress kubeship-ingress  -n nginx-gateway  --ignore-not-found || true
-          kubectl delete ingress argocd-ingress     -n argocd          --ignore-not-found || true
+      # Extract WAF ARN from Terraform output      
+      - name: Extract WAF ARN
+        id: waf
+        run: |          
+          echo "acl_arn=$(terraform output -raw waf_web_acl_arn)" >> $GITHUB_OUTPUT
+
+      - name: Render & Delete Ingress with real WAF ARN
+        run: |          
+          WAF="${{ steps.waf.outputs.acl_arn }}"        
+          sed "s|INJECT_WAF_ACL_ARN_HERE|${WAF}|g" \
+            ../manifests/ingress/ingress-cert.tpl.yaml \
+            > rendered-ingress.yaml
+          kubectl delete -f rendered-ingress.yaml
 
           # Then remove any base manifests (e.g. cluster-issuer / certificate) if their CRDs exist
           for file in ../manifests/base/*.yaml; do
