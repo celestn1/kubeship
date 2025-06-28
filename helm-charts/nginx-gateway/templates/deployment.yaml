@@ -4,7 +4,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Chart.Name }}
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -20,20 +19,17 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            {{- range .Values.service.ports }}
-            - name: {{ .name }}
-              containerPort: {{ .targetPort }}
-            {{- end }}
+            - containerPort: {{ .Values.service.targetPort }}
           readinessProbe:
             httpGet:
               path: /health
-              port: 80
+              port: {{ .Values.service.targetPort }}
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /health
-              port: 80
+              port: {{ .Values.service.targetPort }}
             initialDelaySeconds: 10
             periodSeconds: 30
           volumeMounts:
