@@ -237,13 +237,13 @@ jobs:
             > rendered-ingress.yaml
           kubectl apply -f rendered-ingress.yaml
 
-      - name: Render & apply ArgoCD Ingress with real WAF ARN
-        run: |
-          WAF="${{ steps.waf.outputs.acl_arn }}"
-          sed "s|INJECT_WAF_ACL_ARN_HERE|${WAF}|g" \
-            ../manifests/ingress/argocd-ingress.tpl.yaml \
-            > rendered-argocd-ingress.yaml
-          kubectl apply -f rendered-argocd-ingress.yaml
+      #- name: Render & apply ArgoCD Ingress with real WAF ARN
+      #  run: |
+      #    WAF="${{ steps.waf.outputs.acl_arn }}"
+      #    sed "s|INJECT_WAF_ACL_ARN_HERE|${WAF}|g" \
+      #      ../manifests/ingress/argocd-ingress.tpl.yaml \
+      #      > rendered-argocd-ingress.yaml
+      #    kubectl apply -f rendered-argocd-ingress.yaml
 
       # 8. Install ArgoCD base manifests
       - name: Apply base manifests
