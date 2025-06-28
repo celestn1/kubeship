@@ -29,9 +29,10 @@ data:
 
           # ACME HTTP-01 challenge
           location ^~ /.well-known/acme-challenge/ {
-              root /usr/share/nginx/html;
-              default_type "text/plain";
+              proxy_pass http://localhost:8089;
+              proxy_set_header Host $host;
           }
+
 
           # Redirect HTTP to HTTPS
           location / {
